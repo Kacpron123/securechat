@@ -1,2 +1,4 @@
 client/target
 server/target
+key.pub
+key.priv
