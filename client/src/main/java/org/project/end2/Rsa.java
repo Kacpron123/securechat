@@ -4,12 +4,13 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.AsymmetricKey;
+import java.security.Key;
 public interface Rsa {
   public   KeyPair generatePairOfKeys();
   public void writeKeysToFile(KeyPair keyPair);
   public  PublicKey readPubKeyFromFile();
   public PrivateKey readPrivKeyFromFile();
-  public String encodeMessage( AsymmetricKey key,String message);
-  public String decodeMessage( AsymmetricKey key,String message);
+  public byte[] encodeMessage( Key key,byte[] message);
+  public byte[] decodeMessage(Key key,byte[] message);
+  public String byteToString(byte[] message);
 }

@@ -15,9 +15,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
+
 import javax.crypto.*;
 
 import org.project.end2.Rsa;
@@ -39,13 +37,17 @@ public class RsaImp implements Rsa{
     return null;
     
   }
-  public String encodeMessage( AsymmetricKey key,String message) {
+  public String byteToString(byte[] message){
+    return new String(message,StandardCharsets.UTF_8);
+  }
+
+  public byte[] encodeMessage( Key key,byte[] message) {
     try{
-      Cipher encryptCipher = Cipher.getInstance("RSA");
+      Cipher encryptCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
       encryptCipher.init(Cipher.ENCRYPT_MODE, key);
 
-     byte[] bytes = encryptCipher.doFinal(message.getBytes(StandardCharsets.UTF_8));
-    return new String(Base64.getEncoder().encode(bytes));
+     byte[] bytes = encryptCipher.doFinal(message);
+    return bytes;
 
     }catch(NoSuchAlgorithmException e){
       LOGGER.error("encodeMessage :No algorithm found",e);
@@ -61,15 +63,15 @@ public class RsaImp implements Rsa{
     return null;
    
   }
-  public String decodeMessage( AsymmetricKey key,String message){
+  public byte[] decodeMessage(Key key,byte[] message){
     
     try{
       
-      Cipher cipher = Cipher.getInstance("RSA");
+      Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
       cipher.init(Cipher.DECRYPT_MODE, key);
-
-      byte[] bytes = cipher.doFinal(Base64.getDecoder().decode(message));
-      return new String(bytes);
+      
+      byte[] bytes = cipher.doFinal(message);
+      return bytes;
     }catch(NoSuchAlgorithmException e){
       LOGGER.error("decodeMessage :No algorithm found",e);
     }
