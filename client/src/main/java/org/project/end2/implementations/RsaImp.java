@@ -63,7 +63,7 @@ public class RsaImp implements Rsa{
     return null;
    
   }
-  public byte[] decodeMessage(Key key,byte[] message){
+  public byte[] decodeMessage(Key key,byte[] message) throws BadPaddingException{
     
     try{
       
@@ -77,6 +77,7 @@ public class RsaImp implements Rsa{
     }
     catch(NoSuchPaddingException  | BadPaddingException e){
       LOGGER.error("decodeMessage : NoSuchPaddingException",e);
+      throw new BadPaddingException("use of wrong key");
     }
     catch(InvalidKeyException e){
       LOGGER.error("decodeMessage : InvalidKeyException",e);

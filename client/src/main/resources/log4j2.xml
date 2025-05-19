@@ -12,10 +12,13 @@
   </Appenders>
 
   <Loggers>
+ 
     <Logger name="com.mycompany" level="DEBUG"/>
     <Root level="INFO">
       <AppenderRef ref="CONSOLE"/>
     </Root>
+     <Logger name="org.project.end2.implementations.RsaImp" level="INFO" additivity="false">
+         <AppenderRef ref="CONSOLE"/> </Logger>
   </Loggers>
 
 </Configuration>
