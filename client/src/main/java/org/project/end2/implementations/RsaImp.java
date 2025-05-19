@@ -19,7 +19,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.*;
-
+import java.security.Key;
 import org.project.end2.Rsa;
 public class RsaImp implements Rsa{
 
@@ -39,7 +39,7 @@ public class RsaImp implements Rsa{
     return null;
     
   }
-  public String encodeMessage( AsymmetricKey key,String message) {
+  public String encodeMessage( Key key,String message) {
     try{
       Cipher encryptCipher = Cipher.getInstance("RSA");
       encryptCipher.init(Cipher.ENCRYPT_MODE, key);
@@ -61,7 +61,7 @@ public class RsaImp implements Rsa{
     return null;
    
   }
-  public String decodeMessage( AsymmetricKey key,String message){
+  public String decodeMessage(Key key,String message){
     
     try{
       
