@@ -10,6 +10,7 @@ public interface Rsa {
   public void writeKeysToFile(KeyPair keyPair);
   public  PublicKey readPubKeyFromFile();
   public PrivateKey readPrivKeyFromFile();
-  public String encodeMessage( Key key,String message);
-  public String decodeMessage(Key key,String message);
+  public byte[] encodeMessage( Key key,byte[] message);
+  public byte[] decodeMessage(Key key,byte[] message);
+  public String byteToString(byte[] message);
 }

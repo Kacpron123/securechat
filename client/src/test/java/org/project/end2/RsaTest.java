@@ -1,6 +1,11 @@
 package org.project.end2;
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.*;
 import org.project.end2.implementations.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -11,7 +16,7 @@ import org.project.end2.Rsa;
 
 public class RsaTest
 {
- 
+private static final Logger LOGGER = LogManager.getLogger(); 
  Rsa rsa = new RsaImp();
   KeyPair keys = null;
   @BeforeEach
@@ -39,12 +44,33 @@ public class RsaTest
   }
 
   @Test
-  void encodeMessage(){
+  void encodeMessage() {
     String msg = " wiadomosc";
-    String msgE = rsa.encodeMessage(keys.getPublic(), msg);
+    String msgH = "X".repeat(120);
    
-    String msgD = rsa.decodeMessage(keys.getPrivate(),msgE);
+      byte[] msgE = rsa.encodeMessage(keys.getPublic(), msg.getBytes(StandardCharsets.UTF_8));
+       byte[] msgDB = rsa.decodeMessage(keys.getPrivate(),msgE);
+    String msgD = rsa.byteToString(msgDB);
     assertEquals(msg, msgD);
+    LOGGER.info("encode : msg {}  msgD {}",msg,msgD);
+   
+   
+    }
+    @Test
+    void speedOfRsa(){
+       long startTime = System.nanoTime(); 
+      
+        encodeMessage();
+        System.out.println("Zadanie zakończone.");
+      
+     
+        long endTime = System.nanoTime(); 
+       
+
+
+        long durationNanos = endTime - startTime; // Oblicz różnicę w nanosekundach
+        double durationMillis = (double) durationNanos / 1000000.0;
+         LOGGER.info("speedOfRsa : Czas wykonania: " + String.format("%.3f", durationMillis) + " milisekund");
     }
     
 }
