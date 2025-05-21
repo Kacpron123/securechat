@@ -4,7 +4,7 @@ import org.junit.jupiter.api.*;
 import org.project.securechat.client.implementations.*;
 import static org.junit.jupiter.api.Assertions.*;
 import org.project.securechat.client.Client;
-import org.project.securechat.sharedClass.Message;;
+import org.project.securechat.sharedClass.Message;
 public class ClientTest
 {
  
