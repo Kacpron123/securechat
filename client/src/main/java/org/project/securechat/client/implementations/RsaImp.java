@@ -1,4 +1,5 @@
-package org.project.end2.implementations;
+package org.project.securechat.client.implementations;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -18,7 +19,7 @@ import org.apache.logging.log4j.LogManager;
 
 import javax.crypto.*;
 
-import org.project.end2.Rsa;
+import org.project.securechat.client.Rsa;
 public class RsaImp implements Rsa{
 
   private static final Logger LOGGER = LogManager.getLogger(); 

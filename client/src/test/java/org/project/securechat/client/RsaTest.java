@@ -1,4 +1,4 @@
-package org.project.end2;
+package org.project.securechat.client;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -9,9 +9,9 @@ import javax.crypto.BadPaddingException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.*;
-import org.project.end2.implementations.*;
+import org.project.securechat.client.implementations.*;
 import static org.junit.jupiter.api.Assertions.*;
-import org.project.end2.Rsa;
+import org.project.securechat.client.Rsa;
 /**
  * Unit test for simple App.
  */

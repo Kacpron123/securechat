@@ -1,4 +1,4 @@
-package org.project.end;
+package org.project.securechat.server;
 
 
 import org.apache.logging.log4j.LogManager;

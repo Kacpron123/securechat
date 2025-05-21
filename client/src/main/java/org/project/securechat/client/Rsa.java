@@ -1,5 +1,4 @@
-package org.project.end2;
-
+package org.project.securechat.client;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;

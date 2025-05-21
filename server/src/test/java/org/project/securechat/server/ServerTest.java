@@ -1,4 +1,4 @@
-package org.project.end;
+package org.project.securechat.server;
 
 import org.junit.jupiter.api.*;
 /**

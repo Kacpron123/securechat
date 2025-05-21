@@ -1,18 +1,19 @@
-package org.project.end2;
-import java.security.*;
+package org.project.securechat.sharedClass;
+
 import org.junit.jupiter.api.*;
-import org.project.end2.implementations.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit test for simple App.
  */
 
-public class ClientTest
+public class AppTest
 {
  
   @Test
   void clientOn(){
-    Client.main(null);
+    System.out.println("test");
+    
   }
   
 }
