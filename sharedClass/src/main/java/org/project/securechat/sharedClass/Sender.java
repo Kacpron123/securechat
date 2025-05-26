@@ -10,18 +10,18 @@ import java.io.PrintWriter;
 
 public class Sender implements Runnable{
   private DataOutputStream out;
-  private BlockingQueue<String> queue;
+  private BlockingQueue<String> clientOutputQueue;
   Function<String,String> procesing;
-  public Sender(DataOutputStream out,BlockingQueue<String> queue,Function<String,String> procesing){
+  public Sender(DataOutputStream out,BlockingQueue<String> outputQueue,Function<String,String> procesing){
     this.out =out;
-    this.queue=queue;
+    this.clientOutputQueue=outputQueue;
     this.procesing=(s) -> s;
   }
   @Override
   public void run(){
     try{
       while(true){
-        String message=queue.take();
+        String message=clientOutputQueue.take();
         String processedMessage=procesing.apply(message);
         out.writeUTF(processedMessage);
       }

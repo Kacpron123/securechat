@@ -67,6 +67,7 @@ public class Client{
     }finally{
       try {
         socket.close();
+        
       } catch (Exception e) {
         e.printStackTrace();
       }

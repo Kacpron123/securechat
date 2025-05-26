@@ -8,12 +8,12 @@ import java.lang.Runnable;
 
 public class Receiver implements Runnable{
   private DataInputStream in;
-  private BlockingQueue<String> queue;
+  private BlockingQueue<String> serverInputQueue;
   private volatile boolean running=true;
 
-  public Receiver(DataInputStream in,BlockingQueue<String> queue){
+  public Receiver(DataInputStream in,BlockingQueue<String> inputQueue){
     this.in = in;
-    this.queue = queue;
+    this.serverInputQueue = inputQueue;
   }
   
   @Override
@@ -21,7 +21,7 @@ public class Receiver implements Runnable{
     try{
       String message;
       while(running && (message = in.readUTF()) != null){
-        queue.put(message);
+        serverInputQueue.put(message);
         System.out.println(message);
       }
     }
