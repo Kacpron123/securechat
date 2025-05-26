@@ -69,7 +69,7 @@
             <artifactId>exec-maven-plugin</artifactId>
             <version>3.3.0</version>
             <configuration>
-                <mainClass>org.project.end.Server</mainClass>
+                <mainClass>org.project.securechat.server.Server</mainClass>
             </configuration>
         </plugin>
          

@@ -1,11 +1,7 @@
 package org.project.securechat.sharedClass;
 import java.time.Instant;
-/**
- * Hello world!
- *
- */
-public class Message
-{
+
+public class Message{
   public Message(String senderID, String chatID, String data){
     this.senderID = senderID;
     this.chatID = chatID;
