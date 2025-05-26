@@ -22,12 +22,12 @@ public class ClientHandler implements Runnable{
     DataOutputStream out;
     public String userID;
     
-    BlockingQueue<String> queue;
+    BlockingQueue<String> clientInputQueue;
 
-    public ClientHandler(Socket socket,String userID, BlockingQueue<String> oldqueue, DataOutputStream out){
+    public ClientHandler(Socket socket,String userID, BlockingQueue<String> preClientInputQueue, DataOutputStream out){
         this.socket = socket;
         this.userID= userID;
-        this.queue=oldqueue;
+        this.clientInputQueue=preClientInputQueue;
         this.out=out;
     }
     public String getLogin(){
@@ -45,7 +45,7 @@ public class ClientHandler implements Runnable{
       
         String message=null;
         while(true){
-          message=queue.take();
+          message=clientInputQueue.take();
           processMessage(message);
           out.writeUTF(message);
           }

@@ -60,7 +60,7 @@ public class Server {
     private DataInputStream in;
     private DataOutputStream out;
     
-    private BlockingQueue<String> queue =new LinkedBlockingDeque<>(10);
+    private BlockingQueue<String> preClientInputQueue =new LinkedBlockingDeque<>(10);// wczesna kolejka user inputu
     
     Login(Socket socket){
       this.socket = socket;
@@ -85,12 +85,12 @@ public class Server {
     @Override
     public void run() {
       try{
-        receiver=new Receiver(in, queue);
+        receiver=new Receiver(in, preClientInputQueue);
         new Thread(receiver).start();
         String login=null;
         //pytaine o logowanie
         out.writeUTF("Enter login: ");
-        login=queue.take();
+        login=preClientInputQueue.take();
         
         LOGGER.info("Otrzymalem login {}",login);
         if(!loginsAndPass.containsKey(login)){
@@ -101,7 +101,7 @@ public class Server {
         // 3 krotna proba podania hasla
         for(int i=0;i<3;i++){
           out.writeUTF("Enter Password: ");
-          String password=queue.take();
+          String password=preClientInputQueue.take();
           if(correctpass(login,password)){
             out.writeUTF("Welcome "+login);
             break;
@@ -115,7 +115,7 @@ public class Server {
         }
         
         LOGGER.info("Uzytkownik zalogowany: {}",login);
-        ClientHandler handler = new ClientHandler(socket,login,queue,out);
+        ClientHandler handler = new ClientHandler(socket,login,preClientInputQueue,out);
         Server.getInstance().addClient(handler);
         new Thread(handler).start();
       } catch (InterruptedException | IOException e) {

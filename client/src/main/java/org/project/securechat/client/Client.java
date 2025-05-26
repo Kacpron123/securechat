@@ -19,8 +19,8 @@ public class Client{
   private static final String SERVER_HOST = "localhost";
   private static final int SERVER_PORT = 12345;
   
-  private BlockingQueue<String> queue=new LinkedBlockingDeque<>(10);
-  private BlockingQueue<String> queueout=new LinkedBlockingDeque<>(10);
+  private BlockingQueue<String> serverInputQueue=new LinkedBlockingDeque<>(10);// takes server messages
+  private BlockingQueue<String> clientOutputQueue=new LinkedBlockingDeque<>(10);// takes client messages
   private Socket socket;
   private DataOutputStream out;
   private DataInputStream in;
@@ -38,26 +38,26 @@ public class Client{
       out=new DataOutputStream(socket.getOutputStream());
       in = new DataInputStream(socket.getInputStream());
 
-      Receiver receiver=new Receiver(in, queue);
+      Receiver receiver=new Receiver(in, serverInputQueue);
       new Thread(receiver).start();
-      Sender sender=new Sender(out, queueout, null);
+      Sender sender=new Sender(out, clientOutputQueue, null);
       new Thread(sender).start();
 
       // logowanie
-      Scanner scanner=new Scanner(System.in);
-      login=scanner.nextLine();
-      queueout.put(login);
+      Scanner userInput=new Scanner(System.in);
+      login=userInput.nextLine();
+      clientOutputQueue.put(login);
 
       String response=null;
       for(int i=0;i<3;i++){
-        response = queue.take(); //enter password
-        String password=scanner.nextLine();
-        queueout.put(password);
-        response = queue.take();
+        response = serverInputQueue.take(); //enter password
+        String password=userInput.nextLine();
+        clientOutputQueue.put(password);
+        response = serverInputQueue.take();
         if(response.startsWith("Welcome")){
           while(true){
-            String message=scanner.nextLine();
-            queueout.put(message);
+            String message=userInput.nextLine();
+            clientOutputQueue.put(message);
           }
         }
       }

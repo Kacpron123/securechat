@@ -9,7 +9,7 @@ import java.io.IOException;
  * Unit test for simple App.
  */
 
-public class AppTest
+public class JsonTest
 {
  
   Message mess;
@@ -45,7 +45,7 @@ public class AppTest
       }
       catch(Exception e){}
     }
-    
+     
    
     
   }
