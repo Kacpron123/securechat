@@ -11,6 +11,8 @@ import org.project.securechat.sharedClass.Receiver;
 import org.project.securechat.sharedClass.Sender;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 
 public class Client{
@@ -20,8 +22,8 @@ public class Client{
   private BlockingQueue<String> queue=new LinkedBlockingDeque<>(10);
   private BlockingQueue<String> queueout=new LinkedBlockingDeque<>(10);
   private Socket socket;
-  private PrintWriter out;
-  private BufferedReader in;
+  private DataOutputStream out;
+  private DataInputStream in;
   private String login;
   
   private class Processor implements Function<String,String>{
@@ -33,8 +35,8 @@ public class Client{
   public void start(){
     try{
       socket=new Socket(SERVER_HOST,SERVER_PORT);
-      out=new PrintWriter(socket.getOutputStream(),true);
-      in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+      out=new DataOutputStream(socket.getOutputStream());
+      in = new DataInputStream(socket.getInputStream());
 
       Receiver receiver=new Receiver(in, queue);
       new Thread(receiver).start();

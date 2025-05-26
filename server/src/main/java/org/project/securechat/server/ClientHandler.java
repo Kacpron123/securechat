@@ -1,7 +1,7 @@
 package org.project.securechat.server;
 
 import java.io.BufferedReader;
-
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -19,12 +19,12 @@ public class ClientHandler implements Runnable{
   private static final Logger LOGGER = LogManager.getLogger(); 
     public Socket socket;
      
-    PrintWriter out;
+    DataOutputStream out;
     public String userID;
     
     BlockingQueue<String> queue;
 
-    public ClientHandler(Socket socket,String userID, BlockingQueue<String> oldqueue, PrintWriter out){
+    public ClientHandler(Socket socket,String userID, BlockingQueue<String> oldqueue, DataOutputStream out){
         this.socket = socket;
         this.userID= userID;
         this.queue=oldqueue;
@@ -34,23 +34,23 @@ public class ClientHandler implements Runnable{
       return userID;
     }
     void processMessage(String command){
-      LOGGER.info("Otrzymalem ta wiadomosc: {}",command);
+      LOGGER.info("Otrzymalem ta wiadomosc {} : {}",userID,command);
       
     }
     @Override
     public void run(){
       try{
-        System.out.println("Starting ClientHandler: "+userID);
+        
         LOGGER.info("Starting ClientHandler: {}",userID);
       
         String message=null;
         while(true){
           message=queue.take();
           processMessage(message);
-          out.println(message);
+          out.writeUTF(message);
           }
         }
-        catch(InterruptedException e){
+        catch(InterruptedException |IOException e){
           System.out.println(e);
         }finally{
           try{

@@ -4,13 +4,15 @@ package org.project.securechat.sharedClass;
 import java.lang.Runnable;
 import java.util.concurrent.BlockingQueue;
 import java.util.function.Function;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 
 public class Sender implements Runnable{
-  private PrintWriter out;
+  private DataOutputStream out;
   private BlockingQueue<String> queue;
   Function<String,String> procesing;
-  public Sender(PrintWriter out,BlockingQueue<String> queue,Function<String,String> procesing){
+  public Sender(DataOutputStream out,BlockingQueue<String> queue,Function<String,String> procesing){
     this.out =out;
     this.queue=queue;
     this.procesing=(s) -> s;
@@ -21,10 +23,10 @@ public class Sender implements Runnable{
       while(true){
         String message=queue.take();
         String processedMessage=procesing.apply(message);
-        out.println(processedMessage);
+        out.writeUTF(processedMessage);
       }
     }
-    catch(InterruptedException e){
+    catch(InterruptedException | IOException e){
       System.out.println(e);
     }
   }

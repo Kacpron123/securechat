@@ -2,6 +2,9 @@ package org.project.securechat.server;
 
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -54,16 +57,16 @@ public class Server {
   }
   private class Login implements Runnable{
     private Socket socket;
-    private BufferedReader in;
-    private PrintWriter out;
+    private DataInputStream in;
+    private DataOutputStream out;
     
     private BlockingQueue<String> queue =new LinkedBlockingDeque<>(10);
     
     Login(Socket socket){
       this.socket = socket;
       try{
-        in=new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        out=new PrintWriter(socket.getOutputStream(),true);
+        in=new DataInputStream(socket.getInputStream());
+        out=new DataOutputStream(socket.getOutputStream());
       }catch(IOException e){
         
         LOGGER.error("Error setting up streams",e);
@@ -86,24 +89,24 @@ public class Server {
         new Thread(receiver).start();
         String login=null;
         //pytaine o logowanie
-        out.println("Enter login: ");
+        out.writeUTF("Enter login: ");
         login=queue.take();
         
         LOGGER.info("Otrzymalem login {}",login);
         if(!loginsAndPass.containsKey(login)){
-          out.println("login not found");
-          out.println("Do u want to register? (y/n) [not implemented]");
+          out.writeUTF("login not found");
+          out.writeUTF("Do u want to register? (y/n) [not implemented]");
           return;
         }
         // 3 krotna proba podania hasla
         for(int i=0;i<3;i++){
-          out.println("Enter Password: ");
+          out.writeUTF("Enter Password: ");
           String password=queue.take();
           if(correctpass(login,password)){
-            out.println("Welcome "+login);
+            out.writeUTF("Welcome "+login);
             break;
           }else{
-            out.println("Wrong Password");
+            out.writeUTF("Wrong Password");
             if(i==2){
               System.out.println("too many attempts.");
               return;
@@ -115,7 +118,7 @@ public class Server {
         ClientHandler handler = new ClientHandler(socket,login,queue,out);
         Server.getInstance().addClient(handler);
         new Thread(handler).start();
-      } catch (InterruptedException e) {
+      } catch (InterruptedException | IOException e) {
         LOGGER.error("Server : run ",e);
         e.printStackTrace();
       }finally{
