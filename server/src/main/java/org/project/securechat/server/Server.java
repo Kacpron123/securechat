@@ -11,14 +11,14 @@ import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
-// import org.apache.logging.log4j.LogManager;
-// import org.apache.logging.log4j.Logger;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
 import org.project.securechat.sharedClass.Receiver;
 
 
 public class Server {
   private static Server instance=null;
-  // private static final Logger LOGGER = LogManager.getLogger(); 
+   private static final Logger LOGGER = LogManager.getLogger(); 
   private static final int PORT = 12345;
   public final HashMap<String,ClientHandler> clients = new HashMap<>();
 
@@ -40,7 +40,8 @@ public class Server {
       System.out.println("Server started on port " + PORT);
       while (true) {
         Socket clientSocket = serverSocket.accept();
-        System.out.println("New client connected");
+        
+        LOGGER.info("New client connected {}",clientSocket.getInetAddress());
         Login login = new Login(clientSocket);
         new Thread(login).start();
         }
@@ -64,7 +65,8 @@ public class Server {
         in=new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out=new PrintWriter(socket.getOutputStream(),true);
       }catch(IOException e){
-        System.out.println("Error setting up streams: "+e);
+        
+        LOGGER.error("Error setting up streams",e);
       }
     }
     private Receiver receiver;
@@ -86,7 +88,8 @@ public class Server {
         //pytaine o logowanie
         out.println("Enter login: ");
         login=queue.take();
-        System.out.println("Otrzymałem login: "+login);
+        
+        LOGGER.info("Otrzymalem login {}",login);
         if(!loginsAndPass.containsKey(login)){
           out.println("login not found");
           out.println("Do u want to register? (y/n) [not implemented]");
@@ -107,11 +110,13 @@ public class Server {
             }
           }
         }
-        System.out.println("Użytkownik zalogowany: "+login);
+        
+        LOGGER.info("Uzytkownik zalogowany: {}",login);
         ClientHandler handler = new ClientHandler(socket,login,queue,out);
         Server.getInstance().addClient(handler);
         new Thread(handler).start();
       } catch (InterruptedException e) {
+        LOGGER.error("Server : run ",e);
         e.printStackTrace();
       }finally{
       }
