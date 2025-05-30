@@ -1,6 +1,7 @@
 package org.project.securechat.sharedClass;
 
 import org.junit.jupiter.api.*;
+import org.project.securechat.sharedClass.Message.DataType;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,9 +18,9 @@ public class JsonTest
   String payload;
   @BeforeEach
   void setUp(){
-    mess = new Message("Adam","Pawel","bardzo wazna wiadomosc");
+    mess = new Message("Adam","Pawel",DataType.TEXT,"bardzo wazna wiadomosc");
     System.out.println(mess.getTimestamp().toString());
-    payload = "{ \"senderID\" : \"Pawel\", \"chatID\" : \"Adam\",\"timestamp\":\"2025-05-26T08:45:48.641588900Z\", \"data\":\"witam\" }";
+    payload = "{ \"senderID\" : \"Pawel\", \"chatID\" : \"Adam\",\"timestamp\":\"2025-05-26T08:45:48.641588900Z\",\"dataType\":\"FILE\", \"data\":\"witam\" }";
   
   }
   @Test
@@ -33,6 +34,7 @@ public class JsonTest
     }
     try{
       System.out.println(JsonConverter.parseObjectToJson(tmp));
+      System.out.println(tmp.getDataType());
     }catch(Exception e){
       System.out.println(e);
     }

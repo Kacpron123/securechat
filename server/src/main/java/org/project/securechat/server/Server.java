@@ -21,7 +21,7 @@ import org.project.securechat.sharedClass.Receiver;
 
 public class Server {
   private static Server instance=null;
-   private static final Logger LOGGER = LogManager.getLogger(); 
+  private static final Logger LOGGER = LogManager.getLogger(); 
   private static final int PORT = 12345;
   public final HashMap<String,ClientHandler> clients = new HashMap<>();
 
@@ -109,6 +109,7 @@ public class Server {
             out.writeUTF("Wrong Password");
             if(i==2){
               System.out.println("too many attempts.");
+              socket.close();
               return;
             }
           }

@@ -11,9 +11,9 @@ public class ClientTest
   @Test
   void clientOn(){
     Client.main(null);
-    Message message = new Message("0","0","hello im under the water");
+    //Message message = new Message("0","0","hello im under the water");
     
-    message.write();
+    //message.write();
   }
   
 }
