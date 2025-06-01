@@ -1,12 +1,8 @@
 package org.project.securechat.sharedClass;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 
-import java.io.File;
 import java.io.IOException;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -29,17 +25,17 @@ public class JsonConverter {
     }
 
   }
-    public static <T> T parseDataToObject(String jsonData, Class<T> targetType)throws IOException {
-    try{
-       JsonNode parsedNode = parse(jsonData);
 
-    return objectMapper.readValue(parsedNode.toString(), targetType);
-    }catch(IOException e){
-      LOGGER.error("JsonConverter : parseDataToObject {} ",jsonData,e);
-      throw new IOException("JsonConverter : parseDataToObject  "+jsonData,e);
+  public static <T> T parseDataToObject(String jsonData, Class<T> targetType) throws IOException {
+    try {
+      // Directly read the JSON string into the target object
+      return objectMapper.readValue(jsonData, targetType);
+    } catch (IOException e) { // This will catch JsonMappingException, JsonParseException, etc.
+      LOGGER.error("JsonConverter : parseDataToObject {} ", jsonData, e);
+      throw new IOException("JsonConverter : parseDataToObject " + jsonData, e);
     }
-   
   }
+
   public static <T> String parseObjectToJson(T obj) throws IOException{
     try{
       return objectMapper.writeValueAsString( obj);

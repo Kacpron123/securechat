@@ -1,49 +1,48 @@
 package org.project.securechat.sharedClass;
+import java.io.IOException;
 import java.time.Instant;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Getter;
 import lombok.Setter;
 
-
+@Getter
+@Setter
 public class Message{
-  public Message(){}
-  public Message(String senderID, String chatID, String data){
+  static public enum MessageTYPE{
+    TEXT,
+    FILE,
+    KEY_EXCHANGE,
+    COMMAND
+  }
+  public Message(){
+    this.timestamp = Instant.now();
+  }
+  public Message(String senderID, String chatID,MessageTYPE messageType, String data){
     this.senderID = senderID;
     this.chatID = chatID;
-    
+    this.messageType = messageType;
     this.timestamp = Instant.now();
     this.data = data;
   }
   private String senderID;
   private String chatID;
   private Instant timestamp;
-  // public byte[] message;
-  private String data; //for now 
+  @JsonProperty("messageType")
+  private MessageTYPE messageType;
+  private String data;
+
+  static public String toJSON(Message message) {
+    try {
+        return JsonConverter.parseObjectToJson(message);
+    } catch (IOException e) {
+        throw new RuntimeException("Error serializing message to JSON", e);
+    }
+  }
+
   public void write(){
     System.out.println(data);
   }
-  public String getSenderID() {
-    return senderID;
-  }
-  public void setSenderID(String senderID) {
-    this.senderID = senderID;
-  }
-  public String getChatID() {
-    return chatID;
-  }
-  public void setChatID(String chatID) {
-    this.chatID = chatID;
-  }
-  public Instant getTimestamp() {
-    return timestamp;
-  }
-  public void setTimestamp(Instant timestamp) {
-    this.timestamp = timestamp;
-  }
-  public String getData() {
-    return data;
-  }
-  public void setData(String data) {
-    this.data = data;
-  }
+  
 }

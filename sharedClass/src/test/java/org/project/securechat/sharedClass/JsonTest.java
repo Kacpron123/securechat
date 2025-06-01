@@ -15,11 +15,13 @@ public class JsonTest
   Message mess;
   Message mess2;
   String payload;
+
   @BeforeEach
   void setUp(){
-    mess = new Message("Adam","Pawel","bardzo wazna wiadomosc");
-    System.out.println(mess.getTimestamp().toString());
-    payload = "{ \"senderID\" : \"Pawel\", \"chatID\" : \"Adam\",\"timestamp\":\"2025-05-26T08:45:48.641588900Z\", \"data\":\"witam\" }";
+    mess = new Message("Adam","Pawel",Message.MessageTYPE.TEXT,"bardzo wazna wiadomosc");
+    System.out.println(Message.toJSON(mess));
+    
+    payload = "{ \"senderID\" : \"Adam\", \"chatID\" : \"Pawel\",\"timestamp\":\"2025-05-26T08:45:48.641588900Z\",\"messageType\":\"TEXT\", \"data\":\"bardzo wazna wiadomosc\" }";
   
   }
   @Test
@@ -27,7 +29,10 @@ public class JsonTest
     Message tmp = null;
     try{
       tmp = JsonConverter.parseDataToObject(payload, Message.class);
-
+      assertEquals("Adam",tmp.getSenderID());
+      assertEquals("Pawel",tmp.getChatID());
+      assertEquals(Message.MessageTYPE.TEXT,tmp.getMessageType());
+      assertEquals("bardzo wazna wiadomosc",tmp.getData());
     }catch(IOException e){
       System.out.println(e);
     }
