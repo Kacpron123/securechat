@@ -9,15 +9,17 @@ import java.util.function.Function;
 
 import org.project.securechat.sharedClass.Receiver;
 import org.project.securechat.sharedClass.Message;
+import org.project.securechat.sharedClass.ShutdownSignal;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class Client{
+public class Client implements ShutdownSignal{
   private static final String SERVER_HOST = "localhost";
   private static final int SERVER_PORT = 12345;
-  
+  private static final String ServerChatID ="Server";
+
   private Socket socket;
   
   private Scanner scanner;
@@ -33,6 +35,8 @@ public class Client{
   private Thread terminalListenerThread;
   private Thread receiverThread;  
 
+  // TODO add initializeShutDown
+  // Client get /exit then send /exit to ClientHandler and stop Thread
   public Client(Socket socket) throws IOException {
       this.socket = socket;
       this.out = new DataOutputStream(socket.getOutputStream());
@@ -47,7 +51,7 @@ public class Client{
       this.terminalListenerThread = new Thread(terminalListener);
       this.terminalListenerThread.start();
 
-      this.receiver = new Receiver(in, clientOutputQueue, new Processor());
+      this.receiver = new Receiver(in, clientOutputQueue, new Processor(),this);
       this.receiverThread = new Thread(receiver);
       this.receiverThread.start();
   }
@@ -57,7 +61,29 @@ public class Client{
 
   public void initiateShutDown() {
     System.out.println("Client: Initiating shutdown process...");
-    running.set(false); // Ustaw główną flagę na false
+    running.set(false); // konczenie petli Client; TerminalListener i Receiver 
+
+    if(terminalListener != null)
+      terminalListener.stopRunning();
+
+    if(receiver!=null)
+      receiver.stopRunning();
+
+    try{
+      System.out.println("Client: Closing socket to unblock Receiver.");
+      if(socket!=null && !socket.isClosed()){
+        socket.close();
+      }
+    }catch(IOException e){
+      System.out.println("Client: Error closing socket during shutdown: " + e.getMessage());
+    }
+    if(terminalListenerThread!=null){
+      terminalListenerThread.interrupt();
+    }
+    if(receiverThread!=null){
+      receiverThread.interrupt();
+    }
+
   }
   private void login() throws IOException{
     // login
@@ -81,6 +107,17 @@ public class Client{
   private class Processor implements Function<Message,Message>{
     @Override
     public Message apply(Message t) {
+      if(t.getMessageType().equals(Message.MessageTYPE.COMMAND)){
+        if(t.getData().equals("/exit")){
+          running.set(false);
+          clientOutputQueue.add(new Message(login,ServerChatID,Message.MessageTYPE.COMMAND,"/exit_back"));
+          initiateShutDown();
+        }
+        if(t.getData().equals("/exit_back")){
+          running.set(false);
+          cleanup();
+        }
+      }
       return t;
     }
   }
@@ -99,7 +136,7 @@ public class Client{
     System.out.println("Client MainLoop finished");
     cleanup();
   }
-  private void cleanup(){
+  public void cleanup(){
     System.out.println("Client: Initiating cleanup.");
     // 1. Zamknięcie TerminalListener
     if (terminalListener != null) {
