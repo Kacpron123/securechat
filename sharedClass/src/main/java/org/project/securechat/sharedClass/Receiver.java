@@ -39,7 +39,7 @@ public class Receiver implements Runnable{
       System.out.println("Error receiving message: "+e.getMessage());
     }finally{
       shutdownSignal.cleanup();
-      this.running.set(false);
+      stopRunning();
     }
     System.out.println("Receiver finished");
   }

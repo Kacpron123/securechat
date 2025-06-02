@@ -2,6 +2,7 @@ package org.project.securechat.client;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,8 +15,8 @@ import org.project.securechat.sharedClass.Message;
 public class TerminalListener implements Runnable{
     private BlockingQueue<Message> outputQueue;
     private final String serverChatID="Server";
-    private AtomicBoolean running=new AtomicBoolean(true);
-    private String chatID;
+    public AtomicBoolean running=new AtomicBoolean(true);
+    private String chatID=serverChatID;
     private String userID;
     private Client client;
     Scanner scanner=new Scanner(System.in);
@@ -53,24 +54,29 @@ public class TerminalListener implements Runnable{
      * @return null if command is not valid
      * @throws IOException
      */
-    private Message processing(String message) throws IOException {
+    public Message processing(String message) throws IOException {
         if(message.startsWith("/")){
-            if(message.equals("/exit")){
-                running.set(false);
+            if(message.startsWith("/exit")){
+                stopRunning();
                 client.initiateShutDown();
                 return new Message(userID,chatID,Message.MessageTYPE.COMMAND,"/exit");
             }
             //starting chat
             //without arguments leave chat
-            if(message.startsWith("/chat ")){
+            if(message.startsWith("/chat")){
                 String givenChatID=getFirstArgument(message);
-                if(givenChatID==null)
+                System.out.println("Joined chat: "+givenChatID);
+                if(givenChatID==null){
+                    System.out.println("Server chat");
+                    this.chatID=serverChatID;
                     return null;
+                }
                 this.chatID=givenChatID;
                 return null;
             }
             // leaving chat
             if(message.startsWith("/leave")){
+                System.out.println("Server chat");
                 this.chatID=serverChatID;
             }
             // sending file from given path
@@ -85,8 +91,12 @@ public class TerminalListener implements Runnable{
             return null;
         }
         // sending message
-        if(!message.startsWith("/") && !chatID.equals(serverChatID) && chatID!=null)
-            return new Message(userID,chatID,Message.MessageTYPE.TEXT,message);
+        if(!message.startsWith("/")){
+            if(!chatID.equals(serverChatID))
+                return new Message(userID,chatID,Message.MessageTYPE.TEXT,message);
+            System.out.println("Please join a chat first");
+            return null;
+        }
         
         return null;
     }
@@ -94,17 +104,24 @@ public class TerminalListener implements Runnable{
     
     @Override
     public void run() {
+        // TODO change loops that sending files not stop the loop
+        try{
+        String terminalinput;
         while(running.get()){
-            String message=scanner.nextLine();
-            try{
-                Message messageToSent=processing(message);
-                if(messageToSent!=null)
-                    outputQueue.put(messageToSent);;
-            }catch(InterruptedException e){
-                System.out.println("Error sending message: "+e.getMessage());
-            }catch(IOException e){
-                System.out.println("Error reading file: "+e.getMessage());
+            terminalinput=scanner.nextLine();
+            Message messageToSent=processing(terminalinput);
+            if(messageToSent!=null)
+                outputQueue.put(messageToSent);
             }
+        }catch(InterruptedException e){
+            System.out.println("TerminalListener interrupted [Shutting down]: "+e.getMessage());
+        }catch(NoSuchElementException | IllegalStateException e){
+            System.err.println("TerminalListener input stream closed or exhausted: "+e.getMessage());
+        }catch(IOException e){
+            System.out.println("Error reading file: "+e.getMessage());
+        }finally{
+            stopRunning();
+            System.out.println("TerminalListener finished.");
         }
     }
     
