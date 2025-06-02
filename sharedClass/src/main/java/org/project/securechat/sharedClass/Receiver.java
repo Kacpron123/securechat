@@ -28,20 +28,18 @@ public class Receiver implements Runnable{
         while(running.get()){
         String jsoString=in.readUTF();
         Message message = JsonConverter.parseDataToObject(jsoString,Message.class);
-        Message processedMessage=processing.apply(message);
-        Thread.sleep(200);        
+        Message processedMessage=processing.apply(message);      
         if(processedMessage!=null)
           outputQueue.put(processedMessage);
       }
     }
     catch(InterruptedException e){
       System.out.println("Receiver interrupted [Shutting down]: "+e.getMessage());
-      e.printStackTrace();
-      shutdownSignal.cleanup();
     }catch(IOException e){
       System.out.println("Error receiving message: "+e.getMessage());
-      e.printStackTrace();
+    }finally{
       shutdownSignal.cleanup();
+      this.running.set(false);
     }
     System.out.println("Receiver finished");
   }
