@@ -6,19 +6,21 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.lang.Runnable;
 import java.util.function.Function;
 
 import org.project.securechat.sharedClass.Receiver;
+import org.project.securechat.sharedClass.ShutdownSignal;
 import org.project.securechat.sharedClass.Message;
 
 
-public class ClientHandler implements Runnable{
-  public Socket socket;
-  private DataOutputStream out;
-  private DataInputStream in;
-  public String userID;
-  private volatile boolean running=true;
+public class ClientHandler implements Runnable, ShutdownSignal{
+  private final Socket socket;
+  private final DataOutputStream out;
+  private final DataInputStream in;
+  final String userID;
+  AtomicBoolean running=new AtomicBoolean(true);
   BlockingQueue<Message> Outputqueue;
 
   private Receiver receiver; // Reference to the receiver thread's Runnable
@@ -27,67 +29,60 @@ public class ClientHandler implements Runnable{
   private class IncomingMessageProcessor implements Function<Message,Message>{
     @Override
     public Message apply(Message message) {
-      Message.MessageTYPE type=message.getMessageTYPE();
+      if(message==null){
+        return null;
+      }
+      Message.MessageTYPE type=message.getMessageType();
       if(type==Message.MessageTYPE.COMMAND){
         if(message.getData().equals("/exit")){
-          running=false;
-          return null;
+          running.set(false);
+          return new Message();
         }
       }
       return null;
     }
   }
   
-  public ClientHandler(Socket socket,String userID, BlockingQueue<Message> oldOutputqueue) throws IOException{
+  public ClientHandler(Socket socket,String userID, BlockingQueue<Message> oldOutputqueue,DataInputStream in, DataOutputStream out) throws IOException{
     this.socket = socket;
     this.userID= userID;
     this.Outputqueue=oldOutputqueue;
-    this.in = new DataInputStream(socket.getInputStream());
-    this.out = new DataOutputStream(socket.getOutputStream());
+    this.in = in;
+    this.out = out;
 
     // Initialize and start the receiver thread
-    this.receiver = new Receiver(this.in, new LinkedBlockingDeque<>(), new IncomingMessageProcessor()); // Receiver will put *processed* messages here
+    this.receiver = new Receiver(this.in, new LinkedBlockingDeque<>(), new IncomingMessageProcessor(),this);
     this.receiverThread = new Thread(receiver, "Receiver-" + userID);
     this.receiverThread.start(); // Start listening for incoming messages
-  }
-  public String getLogin(){
-    return userID;
+    System.out.println("ClientHandler for "+userID+" initialized and started");
   }
   public void stopRunning(){
-    this.running = false; // Signal ClientHandler's main loop to stop
-    if (receiver != null) {
-      receiver.stopRunning(); // Signal Receiver to stop
-    }
-    // Interrupt the ClientHandler's thread if it's blocked on something (e.g., outputQueue.take())
-    Thread.currentThread().interrupt();
+    this.running.set(false); // Signal ClientHandler's main loop to stop
   }
+
+
   @Override
   public void run(){
     try{
-      while(running){
+      while(running.get()){
         Message message = Outputqueue.take();
         out.writeUTF(Message.toJSON(message));
       }
     }
-    new Thread
     catch(InterruptedException e){
       System.out.println("CLientHandler interrupted [Shouting down]: "+e.getMessage());
       Thread.currentThread().interrupt();
     }catch(IOException e){
       System.out.println("Error sending message: "+e.getMessage());
     }finally{
-      try{
-        System.out.println("ClientHandler for "+userID+" closing socket.");
-        socket.close();
-        Server.getInstance().removeClient(userID);
-      }catch(IOException e){
-        e.printStackTrace();
-      }finally{
-        cleanup();
-      }
+      cleanup();
     }
   }
-  private void cleanup() {
+  public void initiateShutDown(){
+    stopRunning();
+    Server.getInstance().removeClient(userID);
+  }
+  public void cleanup() {
     // First, gracefully stop the receiver thread
     if (receiverThread != null && receiverThread.isAlive()) {
       System.out.println("Attempting to stop receiver thread for " + userID + "...");
@@ -116,6 +111,11 @@ public class ClientHandler implements Runnable{
       System.out.println("ClientHandler cleanup complete for " + userID + ".");
     } catch (IOException e) {
       System.err.println("Error during client handler cleanup for " + userID + ": " + e.getMessage());
+    }finally{
+      if(Server.getInstance()!=null)
+        Server.getInstance().removeClient(userID);
     }
+    System.out.println("ClientHandler complete work");
   }
+  
 }
