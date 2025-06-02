@@ -3,7 +3,6 @@ package org.project.securechat.server;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
-import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -13,15 +12,16 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
+import org.project.securechat.sharedClass.Message;
 
- import org.apache.logging.log4j.LogManager;
- import org.apache.logging.log4j.Logger;
+// import org.apache.logging.log4j.LogManager;
+// import org.apache.logging.log4j.Logger;
 import org.project.securechat.sharedClass.Receiver;
 
 
 public class Server {
   private static Server instance=null;
-   private static final Logger LOGGER = LogManager.getLogger(); 
+  // private static final Logger LOGGER = LogManager.getLogger(); 
   private static final int PORT = 12345;
   public final HashMap<String,ClientHandler> clients = new HashMap<>();
 
@@ -43,8 +43,7 @@ public class Server {
       System.out.println("Server started on port " + PORT);
       while (true) {
         Socket clientSocket = serverSocket.accept();
-        
-        LOGGER.info("New client connected {}",clientSocket.getInetAddress());
+        System.out.println("New client connected");
         Login login = new Login(clientSocket);
         new Thread(login).start();
         }
@@ -57,22 +56,21 @@ public class Server {
   }
   private class Login implements Runnable{
     private Socket socket;
-    private DataInputStream in;
+
     private DataOutputStream out;
+    private DataInputStream in;
     
-    private BlockingQueue<String> preClientInputQueue =new LinkedBlockingDeque<>(10);// wczesna kolejka user inputu
+    private BlockingQueue<Message> preOutputQueue =new LinkedBlockingDeque<>(10);
     
     Login(Socket socket){
       this.socket = socket;
       try{
-        in=new DataInputStream(socket.getInputStream());
-        out=new DataOutputStream(socket.getOutputStream());
+        BufferedReader tempIn=new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        PrintWriter tempOut=new PrintWriter(socket.getOutputStream(),true);
       }catch(IOException e){
-        
-        LOGGER.error("Error setting up streams",e);
+        System.out.println("Error setting up streams: "+e);
       }
     }
-    private Receiver receiver;
     static HashMap<String,String> loginsAndPass=new HashMap<>();
     static {
       loginsAndPass.put("Jan","123");
@@ -85,14 +83,11 @@ public class Server {
     @Override
     public void run() {
       try{
-        receiver=new Receiver(in, preClientInputQueue);
-        new Thread(receiver).start();
         String login=null;
         //pytaine o logowanie
-        out.writeUTF("Enter login: ");
-        login=preClientInputQueue.take();
-        
-        LOGGER.info("Otrzymalem login {}",login);
+        out.writeUTF("Enter Login: ");
+        login=in.readUTF();
+        System.out.println("Otrzymałem login: "+login);
         if(!loginsAndPass.containsKey(login)){
           out.writeUTF("login not found");
           out.writeUTF("Do u want to register? (y/n) [not implemented]");
@@ -101,25 +96,23 @@ public class Server {
         // 3 krotna proba podania hasla
         for(int i=0;i<3;i++){
           out.writeUTF("Enter Password: ");
-          String password=preClientInputQueue.take();
+          String password=in.readLine();
           if(correctpass(login,password)){
-            out.writeUTF("Welcome "+login);
+            out.println("Welcome "+login);
             break;
           }else{
-            out.writeUTF("Wrong Password");
+            out.println("Wrong Password");
             if(i==2){
               System.out.println("too many attempts.");
               return;
             }
           }
         }
-        
-        LOGGER.info("Uzytkownik zalogowany: {}",login);
-        ClientHandler handler = new ClientHandler(socket,login,preClientInputQueue,out);
+        System.out.println("Użytkownik zalogowany: "+login);
+        ClientHandler handler = new ClientHandler(socket,login,preOutputQueue,in,out);
         Server.getInstance().addClient(handler);
         new Thread(handler).start();
-      } catch (InterruptedException | IOException e) {
-        LOGGER.error("Server : run ",e);
+      } catch (InterruptedException e) {
         e.printStackTrace();
       }finally{
       }
