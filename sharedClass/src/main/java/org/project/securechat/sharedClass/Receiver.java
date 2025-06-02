@@ -1,31 +1,48 @@
 package org.project.securechat.sharedClass;
 
-import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.lang.Runnable;
 
 public class Receiver implements Runnable{
-  private BufferedReader in;
-  private BlockingQueue<String> queue;
-  private volatile boolean running=true;
-
-  public Receiver(BufferedReader in,BlockingQueue<String> queue){
+  private DataInputStream in;
+  private BlockingQueue<Message> outputQueue;
+  public AtomicBoolean running=new AtomicBoolean(true);
+  private Function<Message,Message> processing;
+  private ShutdownSignal shutdownSignal;
+  public Receiver(DataInputStream in,BlockingQueue<Message> outputQueue,Function<Message,Message> processing,ShutdownSignal shutdownSignal){
     this.in = in;
-    this.queue = queue;
+    this.outputQueue = outputQueue;
+    this.processing=processing;
+    this.shutdownSignal=shutdownSignal;
   }
-  
+  public void stopRunning(){
+    this.running.set(false);; // Signal ClientHandler's main loop to stop
+  }
   @Override
   public void run(){
     try{
-      String message;
-      while(running && (message = in.readLine()) != null){
-        queue.put(message);
-        System.out.println(message);
+        while(running.get()){
+        String jsoString=in.readUTF();
+        Message message = JsonConverter.parseDataToObject(jsoString,Message.class);
+        Message processedMessage=processing.apply(message);
+        Thread.sleep(200);        
+        if(processedMessage!=null)
+          outputQueue.put(processedMessage);
       }
     }
-    catch(IOException | InterruptedException e){
-      
+    catch(InterruptedException e){
+      System.out.println("Receiver interrupted [Shutting down]: "+e.getMessage());
+      e.printStackTrace();
+      shutdownSignal.cleanup();
+    }catch(IOException e){
+      System.out.println("Error receiving message: "+e.getMessage());
+      e.printStackTrace();
+      shutdownSignal.cleanup();
     }
+    System.out.println("Receiver finished");
   }
 }

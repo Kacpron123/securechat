@@ -1,0 +1,50 @@
+package org.project.securechat.sharedClass;
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import java.io.IOException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+
+public class JsonConverter {
+  public static final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule()).configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+  private static final Logger LOGGER = LogManager.getLogger(); 
+
+  private static JsonNode parse(String stringToParse) throws IOException{
+    try{
+       return objectMapper.readTree(stringToParse);
+    }
+    catch(JsonProcessingException e){
+      LOGGER.error("JsonConverter : parse {} ",stringToParse,e);
+      throw new IOException("JsonConverter : parse: " + stringToParse, e);
+    }
+
+  }
+
+  public static <T> T parseDataToObject(String jsonData, Class<T> targetType) throws IOException {
+    try {
+      // Directly read the JSON string into the target object
+      return objectMapper.readValue(jsonData, targetType);
+    } catch (IOException e) { // This will catch JsonMappingException, JsonParseException, etc.
+      LOGGER.error("JsonConverter : parseDataToObject {} ", jsonData, e);
+      throw new IOException("JsonConverter : parseDataToObject " + jsonData, e);
+    }
+  }
+
+  public static <T> String parseObjectToJson(T obj) throws IOException{
+    try{
+      return objectMapper.writeValueAsString( obj);
+    }
+    catch(IOException e){
+      LOGGER.error("JsonConverter : parseObjectToJson ",e);
+      throw new IOException("JsonConverter : parseObjectToJson ");
+    }
+  }
+
+  
+}
