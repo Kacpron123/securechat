@@ -1,0 +1,174 @@
+package org.project.securechat.server.sql;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+public class SqlHandlerPasswords {
+
+  private static final String DB_URL = "jdbc:sqlite:securechat.db"; // Nazwa pliku bazy danych
+
+  public static void main(String[] args) {
+    createUsersTable();
+    System.out.println("Operacje zakończone. Sprawdź plik loginDB.db");
+  }
+
+  // Metoda do łączenia się z bazą danych
+  private static Connection connect() {
+    Connection conn = null;
+    try {
+      conn = DriverManager.getConnection(DB_URL);
+      System.out.println("Połączono z bazą danych SQLite.");
+    } catch (SQLException e) {
+      System.err.println("Błąd połączenia z bazą danych: " + e.getMessage());
+    }
+    return conn;
+  }
+
+  // Metoda do tworzenia tabeli
+  public static void createUsersTable() {
+    String sql = "CREATE TABLE IF NOT EXISTS users (" +
+        "login VARCHAR(50) PRIMARY KEY," +
+        "password TEXT NOT NULL," +
+        "rsa_public_key TEXT "+ // 'data' jako TEXT dla daty
+        ");";
+
+    try (Connection conn = connect();
+        Statement stmt = conn.createStatement()) {
+      stmt.execute(sql);
+      System.out.println("Tabela 'users' została utworzona (jeśli nie istniała).");
+    } catch (SQLException e) {
+      System.err.println("Błąd podczas tworzenia tabeli: " + e.getMessage());
+    }
+  }
+
+  // Metoda do wstawiania danych
+  public static boolean insertUser(String login, String password) {
+    String sql = "INSERT INTO users(login, password,rsa_public_key) VALUES(?,?,?)";
+
+    try (Connection conn = connect();
+        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+      pstmt.setString(1, login);
+      pstmt.setString(2, password);
+      pstmt.setNull(3, java.sql.Types.VARCHAR);
+      int rowsAffected = pstmt.executeUpdate();
+      return rowsAffected > 0; // Jeśli dodano co najmniej 1 wiersz, to sukces
+    } catch (SQLException e) {
+      System.err.println("Błąd podczas wstawiania użytkownika '" + login + "': " + e.getMessage());
+      return false;
+    }
+  }
+  public static boolean updateKey(String login, String rsaKey) {
+    String selectSql = "SELECT rsa_public_key FROM users WHERE login = ?";
+    String updateSql = "UPDATE users SET rsa_public_key = ? WHERE login = ?";
+
+    try (Connection conn = connect();
+         PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+
+        selectStmt.setString(1, login);
+        ResultSet rs = selectStmt.executeQuery();
+
+        if (rs.next()) {
+            String existingKey = rs.getString("rsa_public_key");
+            if (existingKey != null) {
+                // Klucz już istnieje — nie aktualizujemy
+                return false;
+            }
+        } else {
+            // Nie znaleziono użytkownika
+            return false;
+        }
+
+        // Klucz nie istnieje — aktualizujemy
+        try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+            updateStmt.setString(1, rsaKey);
+            updateStmt.setString(2, login);
+            updateStmt.executeUpdate();
+            return true;
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return false;
+    }
+  }
+  public static String getPublicKey(String login) {
+    String sql = "SELECT rsa_public_key FROM users WHERE login = ?";
+
+    try (Connection conn = connect();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+        pstmt.setString(1, login);
+        ResultSet rs = pstmt.executeQuery();
+
+        if (rs.next()) {
+            return rs.getString("rsa_public_key"); // Może być null, jeśli nie ustawiono
+        } else {
+            return null; // Użytkownik nie istnieje
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return null;
+    }
+}
+
+  public static String getUserPassword(String login) {
+    String sql = "SELECT password FROM users WHERE login = ?";
+    String password = null;
+
+    try (Connection conn = connect();
+        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+      pstmt.setString(1, login);
+      ResultSet rs = pstmt.executeQuery();
+
+      if (rs.next()) {
+        password = rs.getString("password");
+      }
+    } catch (SQLException e) {
+      System.err.println("Błąd podczas pobierania hasła dla użytkownika '" + login + "': " + e.getMessage());
+    }
+    return password;
+  }
+
+  public static boolean doesUserExist(String login) {
+    String sql = "SELECT COUNT(*) FROM users WHERE login = ?";
+    boolean exists = false;
+
+    try (Connection conn = connect();
+        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+      pstmt.setString(1, login);
+      ResultSet rs = pstmt.executeQuery();
+
+      if (rs.next()) {
+        // Jeśli COUNT(*) zwróci wartość większą od 0, to użytkownik istnieje
+        if (rs.getInt(1) > 0) {
+          exists = true;
+        }
+      }
+    } catch (SQLException e) {
+      System.err.println("Błąd podczas sprawdzania istnienia użytkownika '" + login + "': " + e.getMessage());
+    }
+    return exists;
+  }
+
+  public static void dropTable(String tableName) {
+    // Instrukcja DROP TABLE. Klauzula IF EXISTS zapobiega błędowi, jeśli tabela nie
+    // istnieje.
+    String sql = "DROP TABLE IF EXISTS " + tableName;
+
+    try (Connection conn = connect();
+        Statement stmt = conn.createStatement()) {
+      stmt.execute(sql);
+      System.out.println("Tabela '" + tableName + "' została usunięta (jeśli istniała).");
+    } catch (SQLException e) {
+      System.err.println("Błąd podczas usuwania tabeli '" + tableName + "': " + e.getMessage());
+    }
+  }
+}

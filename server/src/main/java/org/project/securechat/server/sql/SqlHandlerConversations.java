@@ -1,0 +1,61 @@
+package org.project.securechat.server.sql;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+
+public class SqlHandlerConversations {
+   private static final String DB_URL = "jdbc:sqlite:securechat.db";
+
+     private static Connection connect() {
+    Connection conn = null;
+    try {
+      conn = DriverManager.getConnection(DB_URL);
+      System.out.println("Połączono z bazą danych SQLite.");
+    } catch (SQLException e) {
+      System.err.println("Błąd połączenia z bazą danych: " + e.getMessage());
+    }
+    return conn;
+  }
+     public static void createConversationsTable() {
+  String sql = "CREATE TABLE IF NOT EXISTS conversations (" +
+    "chat_id VARCHAR(100) PRIMARY KEY," +
+    "user1 VARCHAR(50) NOT NULL," +
+    "user2 VARCHAR(50) NOT NULL," +
+    "aes_key_for_user1 TEXT ," +
+    "aes_key_for_user2 TEXT " +
+");";
+
+    try (Connection conn = connect();
+        Statement stmt = conn.createStatement()) {
+      stmt.execute(sql);
+      System.out.println("Tabela 'users' została utworzona (jeśli nie istniała).");
+    } catch (SQLException e) {
+      System.err.println("Błąd podczas tworzenia tabeli: " + e.getMessage());
+    }
+  }
+  public static void insertConversation( String user1, String user2,
+                                      String aesKeyUser1, String aesKeyUser2) {
+    String sql = "INSERT INTO conversations (chat_id, user1, user2, aes_key_for_user1, aes_key_for_user2) " +
+                 "VALUES (?, ?, ?, ?, ?)";
+    String[] chatId = {user1,user2};
+  
+ 
+    Arrays.sort(chatId);
+    String chatID = String.join(":",chatId);             
+    try (Connection conn = connect();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        pstmt.setString(1, chatID);
+        pstmt.setString(2, user1);
+        pstmt.setString(3, user2);
+        pstmt.setString(4, aesKeyUser1);
+        pstmt.setString(5, aesKeyUser2);
+        pstmt.executeUpdate();
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
+}

@@ -1,80 +1,192 @@
 package org.project.securechat.client;
+
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.SecretKey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.appender.db.jpa.converter.MessageAttributeConverter;
 import org.project.securechat.sharedClass.JsonConverter;
 import org.project.securechat.sharedClass.Message;
 import org.project.securechat.sharedClass.Message.DataType;
+import org.project.securechat.client.implementations.AesImp;
+import org.project.securechat.client.implementations.RsaImp;
+import org.project.securechat.client.sql.SqlHandlerConversations;
+import org.project.securechat.client.sql.SqlHandlerRsa;
 
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.lang.Runnable;
-public class ClientListener implements Runnable{
-    private static final Logger LOGGER = LogManager.getLogger();
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.security.PublicKey;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+public class ClientListener implements Runnable {
+  private static final Logger LOGGER = LogManager.getLogger();
   private BlockingQueue<String> clientOutputQueue;
-  private BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+  private BufferedReader userInput;
   private ExecutorService executor;
-  public ClientListener(BlockingQueue<String> clientOutputQueue,ExecutorService executor){
+ private final Map<String, Consumer<String>> commandHandlers = new HashMap<>();
+ private final Rsa rsa = new RsaImp(); 
+ private final Aes aes = new AesImp();
+ private PublicKey pubKey;
+ private PrivateKey privKey;
+ public ClientListener(BlockingQueue<String> clientOutputQueue, ExecutorService executor, BufferedReader userInput) {
     this.clientOutputQueue = clientOutputQueue;
     this.executor = executor;
-  } 
-  private String header = "";
-  void process(String message){
-    LOGGER.info("RAW MESSAGE {}",message);
-    Message mess = new Message(Client.login,"N/A",DataType.TEXT,"N/A");
-    LOGGER.info("OBJ MESSAGE CREATED {}",mess);
-    if ("/exit".equalsIgnoreCase(message)) {
-            System.out.println("Rozłączono z czatem.");
-            executor.shutdownNow();
-          
-          }
-    else if(message.startsWith("/chat")){
-      String[] data = message.split(" ");
-      header = data[1];
-      LOGGER.info("HEADER {}",header);
-      mess = new Message(Client.login,header,DataType.TEXT,"witam");
-      
-    }
-    
-    try{
-      String jMess = JsonConverter.parseObjectToJson(mess);
-    LOGGER.info("PROCCED MESS {}",jMess);
-       clientOutputQueue.put(JsonConverter.parseObjectToJson(jMess));  
-    }
-    catch(InterruptedException |IOException e){
-      LOGGER.error("process : ",e);
-    }
-       
+    this.userInput = userInput;
+    initCommandHandlers();
+    KeyPair keyPair = rsa.generatePairOfKeys();
+    privKey = keyPair.getPrivate();
+    pubKey = keyPair.getPublic();
   }
-  @Override
-  public void run(){
-    LOGGER.info("ClientListener working");
-    String message = null;
-    
-    
-      try {
-         while (!Thread.currentThread().isInterrupted()) {
-        System.out.print("Ty: ");
-        message = userInput.readLine();
 
-        process(message);
-          
-         // Tu można dodać wysyłanie wiadomości do serwera/sieci
-          //System.out.println("Wysłano: " + message);
+  private String header = "N/A";
+ private void initCommandHandlers() {
+    commandHandlers.put("/exit", msg -> {
+      Message mess = new Message(Client.login,null,DataType.CLOSE_CONNECTION,null);
+      try{
+        clientOutputQueue.put(JsonConverter.parseObjectToJson(mess));
+      }catch(IOException |InterruptedException e){
+        LOGGER.error(e);
+      }
+      
+      System.out.println("Rozłączono z czatem.");
+      executor.shutdownNow();
+    });
+
+    commandHandlers.put("/chat", msg -> {
+      String[] data = msg.split(" ");
+      if (data.length > 1) {
+
+        header = data[1];
+        
+        LOGGER.info("SPRAWDZ CZY KLUCZ W BAZIE {}",header);
+        String rsaKey = SqlHandlerRsa.getRsaKey(header);
+        
+        try{
+          if(rsaKey == null){
+            LOGGER.info("BRAK KLUCZA W BAZIE");
+          Message message = new Message(Client.login,header,DataType.GET_RSA_KEY,null);
+          LOGGER.info("WYSYLAM ZAPYTANIE O KLUCZ");
+          clientOutputQueue.put(JsonConverter.parseObjectToJson(message));
+        }
+          Thread.sleep(2000);
+           LOGGER.info("SPRAWDZAM PONOWNIE CZY KLUCZ W BAZIE");
+          rsaKey = SqlHandlerRsa.getRsaKey(header);
+          LOGGER.info("KLUCZ {}",rsaKey);
+        }catch(InterruptedException |IOException e){
+          LOGGER.error(e);
+        }
+        
+        LOGGER.info("HEADER {}", header);
 
       }
-     Thread.currentThread().interrupt();
-    } catch (IOException  e) {
-        executor.shutdownNow();
-        
-      LOGGER.error("Błąd wejścia/wyjścia: " + e.getMessage());
-     }
-  
+    });
 
+    commandHandlers.put("/quit", msg -> {
+      header = "N/A";
+      LOGGER.info("HEADER cleared");
+    });
+  }
+
+  private void process(String message) {
+        //System.out.println("DEBUG (ClientListener): JVM Default File Encoding: " + System.getProperty("file.encoding"));
+    LOGGER.info("RAW MESSAGE "+message);
+    
+    String command = message.split(" ")[0].toLowerCase();
+    Message mess  = new Message(Client.login,null,DataType.TEXT,null);;
+    //String[] pack= encryptMessageRetWithKey(message);
+    
+    
+    if (commandHandlers.containsKey(command)) {
+      commandHandlers.get(command).accept(message);
+      mess = new Message(Client.login, header, DataType.TEXT, null);
+    } 
+    if(header.equals("N/A")){
+      mess = new Message(Client.login,header,DataType.TEXT,null);
+    }
+    
+   
+     
+    //LOGGER.info("Odszyfrowany mess {}", decryptMessage(pack[0], pack[1]));
+    
+    
+    
+    try {
+      String jMess = JsonConverter.parseObjectToJson(mess);
+      LOGGER.debug("PROCCED MESS {}", jMess);
+      clientOutputQueue.put(jMess); // podwójne JsonConverter usunięte
+    } catch (InterruptedException | IOException e) {
+      LOGGER.error("process : ", e);
+      Thread.currentThread().interrupt();
+    }
+  }
+  /**
+   * 
+   * 
+   * @return first key sec message in 64
+   *
+   */
+  String[] encryptMessageRetWithKey(String message){
+    SecretKey secretKey = aes.generateKey();
+    String encodedAesMessage64 = aes.byteTo64String(aes.encodeMessage(secretKey, message.getBytes(StandardCharsets.UTF_8)));
+    String encoded64Key = aes.byteTo64String(rsa.encodeMessage(pubKey, secretKey.getEncoded()));
+    return new String[]{encoded64Key,encodedAesMessage64};
+  }
+
+  String decryptMessage(String aesKey,String enMessage){
+     byte[] decodedKey = null;
+    try{
+     decodedKey = rsa.decodeMessage(privKey, aes.base64toBytes(aesKey));
+    }
+    catch(BadPaddingException e){
+      LOGGER.error(e);
+    }
+     SecretKey decodedSecretKey = aes.getKeyFromBytes(decodedKey);
+
+     
+      String decodedMessage = null;
+    try{
+       decodedMessage = new String(aes.decodeMessage(decodedSecretKey,rsa.base64toBytes(enMessage)),StandardCharsets.UTF_8);
+
+    }catch(BadPaddingException e){
+      System.out.println(e);
+    }
+    return decodedMessage;
+  }
+  @Override
+  public void run() {
+    LOGGER.info("ClientListener working");
+    String message = null;
+
+    try {
+      while (!Thread.currentThread().isInterrupted()) {
+        System.out.print("Ty: ");
+        message = userInput.readLine();
+  
+        process(message);
+
+        // Tu można dodać wysyłanie wiadomości do serwera/sieci
+        // System.out.println("Wysłano: " + message);
+
+      }
+      Thread.currentThread().interrupt();
+    } catch (IOException e) {
+      executor.shutdownNow();
+
+      LOGGER.error("Błąd wejścia/wyjścia: " + e.getMessage());
+    }
 
   }
 }

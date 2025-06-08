@@ -1,4 +1,6 @@
 package org.project.securechat.server;
+import org.project.securechat.server.sql.SqlExecutor;
+import org.project.securechat.server.sql.SqlHandlerPasswords;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -7,35 +9,84 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.lang.Runnable;
 
  import org.apache.logging.log4j.LogManager;
  import org.apache.logging.log4j.Logger;
-import org.project.securechat.sharedClass.Receiver;
-
+import org.project.securechat.sharedClass.Message.DataType;
+import org.project.securechat.sharedClass.*;
 
 public class ClientHandler implements Runnable{
   private static final Logger LOGGER = LogManager.getLogger(); 
     public Socket socket;
-     
+    private ExecutorService executor ;
     DataOutputStream out;
     public String userID;
     
     BlockingQueue<String> clientInputQueue;
 
-    public ClientHandler(Socket socket,String userID, BlockingQueue<String> preClientInputQueue, DataOutputStream out){
+    public ClientHandler(Socket socket,String userID, BlockingQueue<String> preClientInputQueue, DataOutputStream out,ExecutorService executor){
         this.socket = socket;
         this.userID= userID;
         this.clientInputQueue=preClientInputQueue;
         this.out=out;
+        this.executor = executor;
     }
     public String getLogin(){
       return userID;
     }
-    void processMessage(String command){
-      LOGGER.info("Otrzymalem ta wiadomosc {} : {}",userID,command);
-      
+    Message processMessage(String message){
+      LOGGER.info("Otrzymalem ta wiadomosc {} : {}",userID,message);
+      try{
+         Message mess = JsonConverter.parseDataToObject(message,Message.class);
+         LOGGER.info("WIADOMOSC SPARSOWANA");
+         if(mess.getDataType().equals(DataType.TEXT)){
+          executor.submit(() -> new SqlExecutor(mess));
+         }
+        else if(mess.getDataType().equals(DataType.GET_RSA_KEY)){
+          String rsaKey = SqlHandlerPasswords.getPublicKey(mess.getChatID());
+          if(rsaKey==null){
+            LOGGER.info("BRAK KLUCZA W BAZIE");
+          }else{
+            LOGGER.info("KLUCZ W BAZIE WYSYLAM");
+          }
+          Message messToSend = new Message(mess.getSenderID(),mess.getChatID(),DataType.GET_RSA_KEY,rsaKey);
+         
+           out.writeUTF(JsonConverter.parseObjectToJson(messToSend));
+           out.flush();
+        }         
+         return null;
+         //return mess;
+      }
+     catch(IOException  e){
+      LOGGER.error(e);
+
+     }
+     return null;
+    }
+    public void sendMessage(String message){
+      try{  
+         out.writeUTF(message);
+      } catch(IOException e){
+        LOGGER.error(e);
+        Message mess = null;
+         Server server = Server.getInstance();
+         try{
+         mess = JsonConverter.parseDataToObject(message,Message.class);
+         
+      }
+     catch(IOException d){
+      LOGGER.error(d);
+        
+      }
+      LOGGER.debug("klienta {} nie ma na serwerze",mess.getChatID());
+     server.removeClient(mess.getChatID());
+    }
+     
+
     }
     @Override
     public void run(){
@@ -44,13 +95,39 @@ public class ClientHandler implements Runnable{
         LOGGER.info("Starting ClientHandler: {}",userID);
       
         String message=null;
-        while(true){
+        while(!Thread.currentThread().isInterrupted()){
           message=clientInputQueue.take();
-          processMessage(message);
-          out.writeUTF(message);
+          Message mess = processMessage(message);
+          if(mess!=null){
+            if(mess.getDataType().equals(DataType.CLOSE_CONNECTION)){
+            executor.shutdownNow();
+            LOGGER.error("watek ClientHandler przerwany");
+            Thread.currentThread().interrupt();
+            
+            try{
+              socket.close();
+            }
+            catch(IOException e){
+              LOGGER.error(e);
+            }
           }
+          if(mess.getChatID() != null && true==false){
+             Server server = Server.getInstance();
+             if(server.clients.get(mess.getChatID())!=null){
+              try{
+                  server.clients.get(mess.getChatID()).sendMessage(JsonConverter.parseObjectToJson(mess));
+              }catch(IOException e){
+                LOGGER.error(e);
+              }
+              
+             };
+          }
+          }
+          
+          }
+         
         }
-        catch(InterruptedException |IOException e){
+        catch(InterruptedException  e){
           System.out.println(e);
         }finally{
           try{

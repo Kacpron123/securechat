@@ -1,24 +1,19 @@
 package org.project.securechat.client;
 
+import java.security.Key;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
 import javax.crypto.BadPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
 
-import java.io.IOException;
-import java.security.Key;
+public interface Aes {
+  public SecretKey generateKey();
+  public  GCMParameterSpec generateIV();
 
-public interface Rsa {
-  public KeyPair generatePairOfKeys();
-
-  public void writeKeysToFile(KeyPair keyPair);
-
-  public PublicKey readPubKeyFromFile();
-
-  public PrivateKey readPrivKeyFromFile();
-
+  public SecretKey getKeyFromBytes(byte[] keyInBytes);
   public byte[] encodeMessage(Key key, byte[] message);
 
   public byte[] decodeMessage(Key key, byte[] message) throws BadPaddingException;
@@ -43,4 +38,6 @@ public interface Rsa {
    * 
    */
   public byte[] base64toBytes(String base64Encoded);
+
+
 }

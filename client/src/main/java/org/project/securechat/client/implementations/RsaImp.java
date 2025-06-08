@@ -38,9 +38,17 @@ public class RsaImp implements Rsa{
     return null;
     
   }
-  public String byteToString(byte[] message){
-    return new String(message,StandardCharsets.UTF_8);
-  }
+   public String byteTo64String(byte[] message) {
+    // Zamienia bajty na Base64 tekst
+    return Base64.getEncoder().encodeToString(message);
+}
+public String base64ToString(String base64Encoded) {
+    byte[] decodedBytes = Base64.getDecoder().decode(base64Encoded);
+    return new String(decodedBytes, StandardCharsets.UTF_8);
+}
+public byte[] base64toBytes(String base64Encoded){
+  return Base64.getDecoder().decode(base64Encoded);
+}
 
   public byte[] encodeMessage( Key key,byte[] message) {
     try{
@@ -89,82 +97,46 @@ public class RsaImp implements Rsa{
 
     return null;
   }
-  public void writeKeysToFile(KeyPair keyPair){
-      
-      PrivateKey privateKey = keyPair.getPrivate();
-      PublicKey publicKey = keyPair.getPublic();
-      LOGGER.info("writeKeysToFile ");
-        try {
-            FileOutputStream pub = new FileOutputStream("key.pub");
-            pub.write(publicKey.getEncoded());
-            pub.close();
+  public void writeKeysToFile(KeyPair keyPair) {
+    try {
+      String publicKeyBase64 = Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
+      String privateKeyBase64 = Base64.getEncoder().encodeToString(keyPair.getPrivate().getEncoded());
 
-           
-            FileOutputStream priv = new FileOutputStream("key.priv");
-            priv.write(privateKey.getEncoded()); 
-            priv.close();
+      Files.write(new File("key.pub").toPath(), publicKeyBase64.getBytes(StandardCharsets.UTF_8));
+      Files.write(new File("key.priv").toPath(), privateKeyBase64.getBytes(StandardCharsets.UTF_8));
 
-        }
-
-    catch(FileNotFoundException e){
-      System.out.println("File not found");
+      LOGGER.info("writeKeysToFile: keys saved in Base64 format");
+    } catch (IOException e) {
+      LOGGER.error("writeKeysToFile: IO error", e);
     }
-    catch(IOException e){
-      System.out.println("IO exception");
-    }
-   
   }
-  public PublicKey readPubKeyFromFile(){
-    
-    try{
-      LOGGER.warn("readPubKey : File might exists");
-      File publicKeyFile = new File("key.pub");
-      
-      byte[] publicKeyBytes = Files.readAllBytes(publicKeyFile.toPath());
+ public PublicKey readPubKeyFromFile() {
+    try {
+      LOGGER.warn("readPubKey: loading Base64 key");
+      byte[] base64Bytes = Files.readAllBytes(new File("key.pub").toPath());
+      byte[] keyBytes = Base64.getDecoder().decode(base64Bytes);
 
-      KeyFactory publicKeyFactory = KeyFactory.getInstance("RSA");
-      EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
-      PublicKey publicKey = publicKeyFactory.generatePublic(publicKeySpec);
-    return publicKey; 
-    }
-    
-    catch(IOException e){
-      System.out.println("Io except");
-    }
-    catch(NoSuchAlgorithmException e){
-       System.out.println("Algorithm not found");
-    }
-    catch(InvalidKeySpecException e){
-      System.out.println("InvalidKeySpec");
+      KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+      return keyFactory.generatePublic(new X509EncodedKeySpec(keyBytes));
+    } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+      LOGGER.error("readPubKey: Failed to load key", e);
     }
     return null;
   }
-  public  PrivateKey readPrivKeyFromFile(){
-    
-    try{
-      LOGGER.warn("readPrivKey : File might exists");
-     File privateKeyFile = new File("key.priv");
-    byte[] privateKeyBytes = Files.readAllBytes(privateKeyFile.toPath());
-    
-    KeyFactory privateKeyFactory = KeyFactory.getInstance("RSA");
-    EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
-      return privateKeyFactory.generatePrivate(privateKeySpec);
+
+  public PrivateKey readPrivKeyFromFile() {
+    try {
+      LOGGER.warn("readPrivKey: loading Base64 key");
+      byte[] base64Bytes = Files.readAllBytes(new File("key.priv").toPath());
+      byte[] keyBytes = Base64.getDecoder().decode(base64Bytes);
+
+      KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+      return keyFactory.generatePrivate(new PKCS8EncodedKeySpec(keyBytes));
+    } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+      LOGGER.error("readPrivKey: Failed to load key", e);
     }
-    catch(FileNotFoundException e){
-      System.out.println("private key not found");
-    }
-    catch(IOException e){
-      System.out.println("Io except");
-    }
-    catch(NoSuchAlgorithmException e){
-       System.out.println("Algorithm not found");
-    }
-    catch(InvalidKeySpecException e){
-       System.out.println("InvalidKeySpec");
-    }
-    
     return null;
   }
-
-
 }
+
+

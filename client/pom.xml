@@ -14,6 +14,7 @@
   <url>http://maven.apache.org</url>
   <properties>
    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
    
  </properties>
   <dependencies>
@@ -44,7 +45,13 @@
     <artifactId>log4j-core</artifactId>
     <version>2.6.1</version>
 </dependency>
+<dependency>
+    <groupId>org.xerial</groupId>
+    <artifactId>sqlite-jdbc</artifactId>
+    <version>3.45.1.0</version> </dependency>
   </dependencies>
+
+
 
 <build>
     <plugins>
@@ -70,6 +77,12 @@
             <version>3.3.0</version>
             <configuration>
                 <mainClass>org.project.securechat.client.Client</mainClass>
+                <systemProperties>
+            <systemProperty>
+                <key>file.encoding</key>
+                <value>UTF-8</value>
+            </systemProperty>
+        </systemProperties>
             </configuration>
         </plugin>
          

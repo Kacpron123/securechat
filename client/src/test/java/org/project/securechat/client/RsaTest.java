@@ -27,6 +27,7 @@ private static final Logger LOGGER = LogManager.getLogger();
     keys = rsa.generatePairOfKeys();
     
     rsa.writeKeysToFile(keys);
+    
   }
 
  
@@ -56,9 +57,9 @@ private static final Logger LOGGER = LogManager.getLogger();
       msgDB = rsa.decodeMessage(keys.getPrivate(),msgE);
     }
     catch(BadPaddingException e){}
-    String msgD = rsa.byteToString(msgDB);
-    assertEquals(msg, msgD);
-    LOGGER.info("encode : msg {}  msgD {}",msg,msgD);
+    String msgD = rsa.byteTo64String(msgDB);
+    assertEquals(msg, rsa.base64ToString(msgD));
+    LOGGER.info("encode : msg {}  msgD {}",msg,rsa.base64ToString(msgD));
    
    
     }
@@ -74,8 +75,8 @@ private static final Logger LOGGER = LogManager.getLogger();
       
         byte[] msgDB = rsa.decodeMessage(keys.getPrivate(),msgE);
         byte[] msgDBWrong = rsa.decodeMessage(keysNew.getPrivate(), msgE);
-        String msgD = rsa.byteToString(msgDB);
-        String msgDWrong = rsa.byteToString(msgDBWrong);
+        String msgD = rsa.byteTo64String(msgDB);
+        String msgDWrong = rsa.byteTo64String(msgDBWrong);
 
       },"BadPaddingException expected");
       LOGGER.info("dif encode : Exception thrown");
