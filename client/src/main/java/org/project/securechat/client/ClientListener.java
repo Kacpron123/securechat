@@ -159,17 +159,26 @@ public class ClientListener implements Runnable {
     Message mess  = new Message(Client.login,null,DataType.TEXT,null);;
     //String[] pack= encryptMessageRetWithKey(message);
     
-    
-    if (commandHandlers.containsKey(command)) {
-      commandHandlers.get(command).accept(message);
-      mess = new Message(Client.login, header, DataType.TEXT, null);
-    } 
-    if(header.equals("N/A")){
-      mess = new Message(Client.login,header,DataType.TEXT,null);
+    if(command.startsWith("/")){
+      if (commandHandlers.containsKey(command)) {
+        commandHandlers.get(command).accept(message);
+        mess = new Message(Client.login, header, DataType.TEXT, null);
+      }else{
+        LOGGER.info("COMMAND NOT FOUND");
+        // nie ma potrzeby wysyłać tego do serwera
+        return;
+      }
+
+    }else{
+      if(header == "N/A"){
+        // wysylanie na zaden chat
+        LOGGER.info("HEADER N/A");
+        return;
+      }
+      LOGGER.info("sending mess to {}",header);
+      mess= new Message(Client.login, header, DataType.TEXT, message);
     }
     
-   
-     
     //LOGGER.info("Odszyfrowany mess {}", decryptMessage(pack[0], pack[1]));
     
     
