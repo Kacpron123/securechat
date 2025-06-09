@@ -46,7 +46,7 @@ public class ClientReceiver implements Runnable {
       KeyPair keyPair = rsa.generatePairOfKeys();
       rsa.writeKeysToFile(keyPair);
       keyForExchange = rsa.readPubKeyFromFile();
-      
+    
     }
     LOGGER.info("KLUCZ ODCZYTANY | STWORZONY");
     Message messageKeyExchange = new Message(Client.login,null,DataType.KEY_EXCHANGE,rsa.byteTo64String(keyForExchange.getEncoded()));
