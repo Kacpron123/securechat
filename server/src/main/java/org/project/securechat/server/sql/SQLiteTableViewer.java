@@ -47,7 +47,19 @@ public class SQLiteTableViewer {
       }
     }
   }
+public static void dropTable(String tableName) {
+    // Instrukcja DROP TABLE. Klauzula IF EXISTS zapobiega błędowi, jeśli tabela nie
+    // istnieje.
+    String sql = "DROP TABLE IF EXISTS " + tableName;
 
+    try (Connection conn = DriverManager.getConnection(DB_URL);
+        Statement stmt = conn.createStatement()) {
+      stmt.execute(sql);
+      System.out.println("Tabela '" + tableName + "' została usunięta (jeśli istniała).");
+    } catch (SQLException e) {
+      System.err.println("Błąd podczas usuwania tabeli '" + tableName + "': " + e.getMessage());
+    }
+  }
   /**
    * Pobiera nazwy wszystkich tabel w bazie danych.
    * 
@@ -88,14 +100,14 @@ public class SQLiteTableViewer {
 
       // Wyświetl nagłówki kolumn
       for (int i = 1; i <= columnCount; i++) {
-        System.out.printf("%-20s", rsmd.getColumnName(i)); // Formatowanie dla lepszej czytelności
+        System.out.printf(" %-20s ", rsmd.getColumnName(i)); // Formatowanie dla lepszej czytelności
       }
       System.out.println("\n-----------------------------------------------------------");
 
       // Wyświetl dane
       while (rs.next()) {
         for (int i = 1; i <= columnCount; i++) {
-          System.out.printf("%-20s", rs.getObject(i));
+          System.out.printf(" %-20s ", rs.getObject(i));
         }
         System.out.println();
       }

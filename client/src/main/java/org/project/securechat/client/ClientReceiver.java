@@ -20,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 import org.project.securechat.sharedClass.*;
 import org.project.securechat.sharedClass.Message.DataType;
 import org.project.securechat.client.implementations.*;
+import org.project.securechat.client.sql.SqlHandlerConversations;
 import org.project.securechat.client.sql.SqlHandlerRsa;
 public class ClientReceiver implements Runnable {
   private static final Logger LOGGER = LogManager.getLogger();
@@ -40,16 +41,16 @@ public class ClientReceiver implements Runnable {
   }
   private void exchangeRsaKey(){
     LOGGER.info("WYSYLANIE KLUCZA");
-    Rsa rsa = new RsaImp();
-    PublicKey keyForExchange = rsa.readPubKeyFromFile();
+    
+    PublicKey keyForExchange = EncryptionService.readPublicKeyFromFile();
     if(keyForExchange == null){
-      KeyPair keyPair = rsa.generatePairOfKeys();
-      rsa.writeKeysToFile(keyPair);
-      keyForExchange = rsa.readPubKeyFromFile();
+      KeyPair keyPair = EncryptionService.generatePairOfRsaKeys();
+      EncryptionService.saveRsaKeysToFile(keyPair);
+      keyForExchange = EncryptionService.readPublicKeyFromFile();
     
     }
     LOGGER.info("KLUCZ ODCZYTANY | STWORZONY");
-    Message messageKeyExchange = new Message(Client.login,null,DataType.KEY_EXCHANGE,rsa.byteTo64String(keyForExchange.getEncoded()));
+    Message messageKeyExchange = new Message(Client.login,null,DataType.KEY_EXCHANGE,EncryptionService.getString64FromBytes(keyForExchange.getEncoded()));
     try{
         clientOutputQueue.put(JsonConverter.parseObjectToJson(messageKeyExchange));
         LOGGER.info("KLUCZ WYSLANY");
@@ -139,10 +140,21 @@ public class ClientReceiver implements Runnable {
       }else{
         LOGGER.info("PODANY UZYTKOWNIK NIE ISTNIEJE");
       }
-     
+      
       
     });
-
+    commandHandlers.put(DataType.AES_EXCHANGE,msg ->{
+      LOGGER.info("ODEBRALEM KLUCZE AES {}",msg.getData());
+      try{
+        
+        AesPair aesPair = JsonConverter.parseDataToObject(msg.getData(), AesPair.class);
+        SqlHandlerConversations.insertConversation(msg.getSenderID(), msg.getChatID(), aesPair.getAesSender(), aesPair.getAesReceiver());
+        
+      }catch(IOException e){
+        LOGGER.error("BLAD ZAMIANY NA AES PAIR ");
+      }
+     
+    });
   
     }
 }

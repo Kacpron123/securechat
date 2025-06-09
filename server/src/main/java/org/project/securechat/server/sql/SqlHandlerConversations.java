@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SqlHandlerConversations {
    private static final String DB_URL = "jdbc:sqlite:securechat.db";
@@ -57,5 +59,35 @@ public class SqlHandlerConversations {
     } catch (SQLException e) {
         e.printStackTrace();
     }
+}
+
+public static Map<String, String> getConversation(String user1,String user2) {
+  String[] chatId = {user1,user2};
+  
+ 
+    Arrays.sort(chatId);
+    String chatID = String.join(":",chatId);  
+    String sql = "SELECT * FROM conversations WHERE chat_id = ?";
+    Map<String, String> result = new HashMap<>();
+
+    try (Connection conn = connect();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+        pstmt.setString(1, chatID);
+        ResultSet rs = pstmt.executeQuery();
+
+        if (rs.next()) {
+            result.put("chat_id", rs.getString("chat_id"));
+            result.put("user1", rs.getString("user1"));
+            result.put("user2", rs.getString("user2"));
+            result.put("aes_key_for_user1", rs.getString("aes_key_for_user1"));
+            result.put("aes_key_for_user2", rs.getString("aes_key_for_user2"));
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+
+    return result.isEmpty() ? null : result;
 }
 }

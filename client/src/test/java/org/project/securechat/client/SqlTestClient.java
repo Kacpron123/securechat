@@ -21,7 +21,8 @@ public class SqlTestClient
   @Test
   void check_database(){
    SQLiteTableViewer.main(null);
-    //SqlHandlerMessages.createMessagesTable();
+ //  SQLiteTableViewer.dropTable("conversations");
+ //  SQLiteTableViewer.dropTable("rsa_public_keys");
   }
   @Test 
   void check_sorting(){

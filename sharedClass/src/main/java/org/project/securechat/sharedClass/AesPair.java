@@ -2,11 +2,12 @@ package org.project.securechat.sharedClass;
 
 public class AesPair {
   
-  private String aesSender;
-  private String aesReceiver;
+
   private String sender;
   private String receiver;
-
+    private String aesSender;
+  private String aesReceiver;
+  public AesPair(){}
   public String getAesSender() {
     return aesSender;
   }

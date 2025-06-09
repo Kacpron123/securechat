@@ -13,6 +13,7 @@ import javax.crypto.SecretKey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.appender.db.jpa.converter.MessageAttributeConverter;
+import org.project.securechat.sharedClass.AesPair;
 import org.project.securechat.sharedClass.JsonConverter;
 import org.project.securechat.sharedClass.Message;
 import org.project.securechat.sharedClass.Message.DataType;
@@ -21,6 +22,7 @@ import org.project.securechat.client.implementations.RsaImp;
 import org.project.securechat.client.sql.SqlHandlerConversations;
 import org.project.securechat.client.sql.SqlHandlerRsa;
 
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,14 +43,15 @@ public class ClientListener implements Runnable {
  private final Aes aes = new AesImp();
  private PublicKey pubKey;
  private PrivateKey privKey;
+ private SecretKey currentAesKey = null;
  public ClientListener(BlockingQueue<String> clientOutputQueue, ExecutorService executor, BufferedReader userInput) {
     this.clientOutputQueue = clientOutputQueue;
     this.executor = executor;
     this.userInput = userInput;
     initCommandHandlers();
-    KeyPair keyPair = rsa.generatePairOfKeys();
-    privKey = keyPair.getPrivate();
-    pubKey = keyPair.getPublic();
+   
+    privKey = EncryptionService.readPrivateKeyFromFile();
+    pubKey = EncryptionService.readPublicKeyFromFile();
   }
 
   private String header = "N/A";
@@ -72,31 +75,79 @@ public class ClientListener implements Runnable {
         header = data[1];
         
         LOGGER.info("SPRAWDZ CZY KLUCZ W BAZIE {}",header);
-        String rsaKey = SqlHandlerRsa.getRsaKey(header);
-        
+        String rsaKeyHeader = SqlHandlerRsa.getRsaKey(header);
+        LOGGER.info("KLUCZ W BAZIE {}",rsaKeyHeader);
         try{
-          if(rsaKey == null){
+          if(rsaKeyHeader == null){
             LOGGER.info("BRAK KLUCZA W BAZIE");
           Message message = new Message(Client.login,header,DataType.GET_RSA_KEY,null);
           LOGGER.info("WYSYLAM ZAPYTANIE O KLUCZ");
           clientOutputQueue.put(JsonConverter.parseObjectToJson(message));
-        }
+            
           Thread.sleep(2000);
            LOGGER.info("SPRAWDZAM PONOWNIE CZY KLUCZ W BAZIE");
-          rsaKey = SqlHandlerRsa.getRsaKey(header);
-          LOGGER.info("KLUCZ {}",rsaKey);
+          rsaKeyHeader = SqlHandlerRsa.getRsaKey(header);
+          LOGGER.info("KLUCZ {}",rsaKeyHeader);
+        }
         }catch(InterruptedException |IOException e){
           LOGGER.error(e);
         }
-        
+        SecretKey aesKey = null;
+        Map<String,String> dataConversation = SqlHandlerConversations.getConversation(Client.login,header);
+        if(dataConversation == null){
+          LOGGER.info("KONWERSACJI NIE MA BAZIE");
+          aesKey = EncryptionService.createAesKey();
+          LOGGER.info("TWORZE KLUCZE AES");
+          try{
+            PublicKey headerKey = EncryptionService.getPublicKeyFromBytes(EncryptionService.getBytesFromString64((rsaKeyHeader)));
+            
+            String aesKeyHeader = EncryptionService.encodeWithRsa(headerKey,aesKey.getEncoded());
+            String aesKeyClient = EncryptionService.encodeWithRsa(pubKey, aesKey.getEncoded());
+            LOGGER.info("STWORZYLEM KLUCZE DLA {} {}",Client.login,header);
+            AesPair aesPair = new AesPair( aesKeyClient,aesKeyHeader,Client.login, header);
+            LOGGER.info("STWORZYLEM PARE KLUCZY AES {}",JsonConverter.parseObjectToJson(aesPair));
+            Message message = new Message(Client.login,header,DataType.AES_EXCHANGE,JsonConverter.parseObjectToJson(aesPair));
+            clientOutputQueue.put(JsonConverter.parseObjectToJson(message));
+            Thread.sleep(2000);
+            dataConversation = SqlHandlerConversations.getConversation(Client.login,header);
+            
+          }catch(Exception e){
+            LOGGER.error("BLAD KONWERSJI RSA PUB FROM BYTES",e);
+          }
+            
+        }
+        LOGGER.info("OTO dataConversation {} \n {} ",dataConversation.get("user1"),dataConversation.get("aes_key_for_user1"));
+        String aesKeyStr = null;
+        if(dataConversation.get("user1").equals(Client.login)){
+          aesKeyStr = dataConversation.get("aes_key_for_user1");
+          
+        }else{
+           aesKeyStr = dataConversation.get("aes_key_for_user2");
+        }
+        LOGGER.info("KLUCZ STR {}",aesKeyStr);
+        try{
+          currentAesKey = EncryptionService.getAesFromBytes(EncryptionService.decodeWithRsa(privKey,aesKeyStr));
+          LOGGER.info("DESZYFRACJA UDANA");
+          if (currentAesKey == null) {
+              LOGGER.error("currentAesKey jest null!");
+          } else {
+          LOGGER.info("currentAesKey OK, długość klucza: " + currentAesKey.getEncoded().length);
+        }
+         
         LOGGER.info("HEADER {}", header);
-
+        
       }
-    });
+        catch(Throwable e){
+          LOGGER.error("DEKRYPCJA ZLYM KLUCZEM ",e);
+        }
+      }
+    }
+    );
 
     commandHandlers.put("/quit", msg -> {
       header = "N/A";
-      LOGGER.info("HEADER cleared");
+      currentAesKey = null;
+      LOGGER.info("HEADER cleared KEY CLEANER");
     });
   }
 

@@ -1,7 +1,8 @@
 package org.project.securechat.server;
 import org.project.securechat.server.sql.SqlExecutor;
+import org.project.securechat.server.sql.SqlHandlerConversations;
 import org.project.securechat.server.sql.SqlHandlerPasswords;
-
+import java.util.Map;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -57,7 +58,19 @@ public class ClientHandler implements Runnable{
          
            out.writeUTF(JsonConverter.parseObjectToJson(messToSend));
            out.flush();
-        }         
+        }else if(mess.getDataType().equals(DataType.AES_EXCHANGE)){
+          AesPair aesPair = JsonConverter.parseDataToObject(mess.getData(), AesPair.class);
+
+          SqlHandlerConversations.insertConversation(mess.getSenderID(), mess.getChatID(), aesPair.getAesSender(),aesPair.getAesReceiver());
+         // Map<String,String> conversation = SqlHandlerConversations.getConversation(mess.getSenderID(),mess.getChatID());
+
+          //aesPair = new AesPair(conversation.get("aes_key_for_user1"),conversation.get("aes_key_for_user2"),conversation.get("user1"),conversation.get("user2"));
+          Message messToSend = new Message(aesPair.getSender(),aesPair.getReceiver(),DataType.AES_EXCHANGE,JsonConverter.parseObjectToJson(aesPair));
+          out.writeUTF(JsonConverter.parseObjectToJson(messToSend));
+          out.flush();
+        }
+
+                
          return null;
          //return mess;
       }

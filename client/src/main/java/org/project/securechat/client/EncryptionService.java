@@ -4,8 +4,11 @@ import org.project.securechat.client.implementations.AesImp;
 import org.project.securechat.client.implementations.RsaImp;
 
 import java.nio.charset.Charset;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
+
 import javax.crypto.SecretKey;
 import javax.crypto.BadPaddingException;
 
@@ -92,5 +95,13 @@ public class EncryptionService {
   public static byte[] getBytesFromString64(String string64){
     return aes.base64toBytes(string64);
   }
-
+  
+  public static PublicKey getPublicKeyFromBytes(byte[] keyBytes) throws Exception {
+      X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+      KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+      return keyFactory.generatePublic(keySpec);
+  }
+  public static SecretKey getAesFromBytes(byte[] aesKey){
+    return aes.getKeyFromBytes(aesKey);
+  }
 }

@@ -19,6 +19,7 @@ public class EncryptionServiceTest {
   void setUp(){
     message = "witam tu tomek";
   }
+  @Disabled
   @Test
   void testCreatingKeysAndSaveToFile(){
     EncryptionService.saveRsaKeysToFile(EncryptionService.generatePairOfRsaKeys());

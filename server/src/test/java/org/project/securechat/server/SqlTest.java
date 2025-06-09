@@ -21,8 +21,12 @@ public class SqlTest
   }
   @Test
   void check_database(){
-    SQLiteTableViewer.main(null);
-    //SqlHandlerMessages.createMessagesTable();
+   // SQLiteTableViewer.main(null);
+   SQLiteTableViewer.main(null);
+    //SqlHandlerPasswords.dropTable("conversations");
+   // SqlHandlerMessages.createMessagesTable();
+  //  SQLiteTableViewer.dropTable("conversations");
+  // SQLiteTableViewer.dropTable("users");
   }
   @Test 
   void check_sorting(){
