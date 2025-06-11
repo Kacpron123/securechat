@@ -116,11 +116,11 @@ public class Login implements Runnable {
       LOGGER.info("Login {} not found in database.", loginAttempt);
       out.writeUTF("Login not found.");
        out.flush();
-      out.writeUTF("Do you want to register? (y/n) [type /register]");
- out.flush();
+      out.writeUTF("Do you want to register? [type /register]");
+        out.flush();
       String registerResponse = preClientInputQueue.take();
       if (registerResponse.trim().equalsIgnoreCase("/register")) {
-        if (handleRegistration()) {
+        if (handleRegistration(loginAttempt)) {
           out.writeUTF("Registration successful. Please log in with your new credentials.");
            out.flush();
           // Po rejestracji, spróbujemy od razu zalogować nowym loginem
@@ -140,16 +140,23 @@ public class Login implements Runnable {
     // Jeśli login istnieje, spróbuj zalogować hasłem
     return attemptLoginWithPassword(loginAttempt);
   }
-
-  private boolean handleRegistration() throws IOException, InterruptedException {
+  private boolean handleRegistration(String newLogin) throws IOException, InterruptedException {
     LOGGER.info("Client attempting registration.");
-    out.writeUTF("Enter new login:");
-     out.flush();
-    String newLogin = preClientInputQueue.take();
-
+    
     out.writeUTF("Enter new password:");
      out.flush();
-    String newPassword = preClientInputQueue.take();
+     String newPassword = preClientInputQueue.take();
+     
+    out.writeUTF("Enter same new password:");
+    out.flush();
+    String newPassword2 = preClientInputQueue.take();
+    
+    if (!newPassword.equals(newPassword2)) {
+      out.writeUTF("Passwords do not match. Please try again.");
+       out.flush();
+      return false;
+    }
+
 
     if (!SqlHandlerPasswords.doesUserExist(newLogin)) {
       if (SqlHandlerPasswords.insertUser(newLogin, newPassword)) {
