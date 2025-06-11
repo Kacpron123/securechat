@@ -170,13 +170,13 @@ public class ClientListener implements Runnable {
       }
 
     }else{
-      if(header == "N/A"){
+      if(header == "N/A" && currentAesKey ==null){
         // wysylanie na zaden chat
         LOGGER.info("HEADER N/A");
         return;
       }
       LOGGER.info("sending mess to {}",header);
-      mess= new Message(Client.login, header, DataType.TEXT, message);
+      mess= new Message(Client.login, header, DataType.TEXT, EncryptionService.encryptWithAesKey(currentAesKey,message));
     }
     
     //LOGGER.info("Odszyfrowany mess {}", decryptMessage(pack[0], pack[1]));
