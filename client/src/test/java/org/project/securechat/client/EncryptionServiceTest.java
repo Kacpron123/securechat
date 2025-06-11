@@ -1,17 +1,13 @@
 package org.project.securechat.client;
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import javax.crypto.SecretKey;
 import javax.crypto.BadPaddingException;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.*;
-import org.project.securechat.client.implementations.*;
 import static org.junit.jupiter.api.Assertions.*;
-import org.project.securechat.client.Rsa;
+
 public class EncryptionServiceTest {
   
   String message;

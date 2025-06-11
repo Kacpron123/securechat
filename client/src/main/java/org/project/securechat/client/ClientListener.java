@@ -22,16 +22,11 @@ import org.project.securechat.client.implementations.RsaImp;
 import org.project.securechat.client.sql.SqlHandlerConversations;
 import org.project.securechat.client.sql.SqlHandlerRsa;
 
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 import java.lang.Runnable;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
-import java.security.KeyPair;
 import java.security.PrivateKey;
 public class ClientListener implements Runnable {
   private static final Logger LOGGER = LogManager.getLogger();

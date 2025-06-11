@@ -1,6 +1,5 @@
 package org.project.securechat.server;
 import org.project.securechat.server.sql.*;
-import java.util.List;
 import java.util.Arrays;
 
 import org.junit.jupiter.api.*;
@@ -18,6 +17,17 @@ public class SqlTest
     SqlHandlerConversations.createConversationsTable();
     SqlHandlerMessages.createMessagesTable();
     //SqlHandlerPasswords.dropTable("users");
+  }
+  @Test
+  void print_Tables(){
+    SQLiteTableViewer.main(null);
+  }
+  @Test
+  void delete_database(){
+    SqlHandlerPasswords.dropTable("users");
+    SqlHandlerPasswords.dropTable("conversations");
+    SqlHandlerPasswords.dropTable("messages");
+    SQLiteTableViewer.main(null);
   }
   @Test
   void check_database(){

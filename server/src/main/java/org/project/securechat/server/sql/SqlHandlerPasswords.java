@@ -6,7 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
+import java.time.LocalDateTime;
 public class SqlHandlerPasswords {
 
   private static final String DB_URL = "jdbc:sqlite:securechat.db"; // Nazwa pliku bazy danych
@@ -33,7 +33,8 @@ public class SqlHandlerPasswords {
     String sql = "CREATE TABLE IF NOT EXISTS users (" +
         "login VARCHAR(50) PRIMARY KEY," +
         "password TEXT NOT NULL," +
-        "rsa_public_key TEXT "+ // 'data' jako TEXT dla daty
+        "rsa_public_key TEXT, "+ // 'data' jako TEXT dla daty
+        "last_login_time DATETIME"+ // 
         ");";
 
     try (Connection conn = connect();
@@ -44,10 +45,24 @@ public class SqlHandlerPasswords {
       System.err.println("Błąd podczas tworzenia tabeli: " + e.getMessage());
     }
   }
+  public static boolean updateLastLoginTime(String login, LocalDateTime lastLoginTime) {
+    String sql = "UPDATE users SET last_login_time = ? WHERE login = ?";
+    try (Connection conn = connect();
+      PreparedStatement pstmt = conn.prepareStatement(sql)) {
+      pstmt.setString(1, lastLoginTime.toString());
+      pstmt.setString(2, login);
+      
+      int rowsAffected = pstmt.executeUpdate();
+      return rowsAffected > 0;
+    } catch (SQLException e) {
+      System.err.println("Błąd podczas aktualizacji czasu ostatniej logowania dla użytkownika '" + login + "': " + e.getMessage());
+      return false;
+    }
+  }
 
   // Metoda do wstawiania danych
   public static boolean insertUser(String login, String password) {
-    String sql = "INSERT INTO users(login, password,rsa_public_key) VALUES(?,?,?)";
+    String sql = "INSERT INTO users(login, password,rsa_public_key,last_login_time) VALUES(?,?,?,?)";
 
     try (Connection conn = connect();
         PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -55,8 +70,9 @@ public class SqlHandlerPasswords {
       pstmt.setString(1, login);
       pstmt.setString(2, password);
       pstmt.setNull(3, java.sql.Types.VARCHAR);
+      pstmt.setString(4, LocalDateTime.now().toString());
       int rowsAffected = pstmt.executeUpdate();
-      return rowsAffected > 0; // Jeśli dodano co najmniej 1 wiersz, to sukces
+      return rowsAffected == 1; // Jeśli dodano 1 wiersz, to sukces
     } catch (SQLException e) {
       System.err.println("Błąd podczas wstawiania użytkownika '" + login + "': " + e.getMessage());
       return false;

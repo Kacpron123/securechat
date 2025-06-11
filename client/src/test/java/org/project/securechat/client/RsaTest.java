@@ -1,6 +1,4 @@
 package org.project.securechat.client;
-import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 
@@ -11,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.*;
 import org.project.securechat.client.implementations.*;
 import static org.junit.jupiter.api.Assertions.*;
-import org.project.securechat.client.Rsa;
 /**
  * Unit test for simple App.
  */
@@ -75,8 +72,6 @@ private static final Logger LOGGER = LogManager.getLogger();
       
         byte[] msgDB = rsa.decodeMessage(keys.getPrivate(),msgE);
         byte[] msgDBWrong = rsa.decodeMessage(keysNew.getPrivate(), msgE);
-        String msgD = rsa.byteTo64String(msgDB);
-        String msgDWrong = rsa.byteTo64String(msgDBWrong);
 
       },"BadPaddingException expected");
       LOGGER.info("dif encode : Exception thrown");

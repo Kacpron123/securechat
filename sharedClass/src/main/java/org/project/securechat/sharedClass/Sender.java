@@ -5,7 +5,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.function.Function;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 
 public class Sender implements Runnable {
   private DataOutputStream out;

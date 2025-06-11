@@ -8,20 +8,17 @@ import java.util.Map;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.Consumer;
 import java.lang.Runnable;
 import java.security.PublicKey;
-import java.sql.DataTruncation;
 import java.security.KeyPair;
-import java.security.PrivateKey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.project.securechat.sharedClass.*;
 import org.project.securechat.sharedClass.Message.DataType;
-import org.project.securechat.client.implementations.*;
 import org.project.securechat.client.sql.SqlHandlerConversations;
 import org.project.securechat.client.sql.SqlHandlerRsa;
+
 public class ClientReceiver implements Runnable {
   private static final Logger LOGGER = LogManager.getLogger();
   private DataInputStream in;

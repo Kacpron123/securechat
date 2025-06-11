@@ -1,6 +1,5 @@
 package org.project.securechat.client;
 import org.project.securechat.client.sql.*;
-import java.util.List;
 import java.util.Arrays;
 
 import org.junit.jupiter.api.*;

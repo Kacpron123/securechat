@@ -5,9 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+
 public class SqlHandlerRsa {
    private static final String DB_URL = "jdbc:sqlite:client_database.db";
 

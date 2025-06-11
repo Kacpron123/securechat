@@ -2,18 +2,13 @@ package org.project.securechat.server;
 import org.project.securechat.server.sql.SqlExecutor;
 import org.project.securechat.server.sql.SqlHandlerConversations;
 import org.project.securechat.server.sql.SqlHandlerPasswords;
-import java.util.Map;
-import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.lang.Runnable;
+import java.time.LocalDateTime;
 
  import org.apache.logging.log4j.LogManager;
  import org.apache.logging.log4j.Logger;
@@ -150,6 +145,12 @@ public class ClientHandler implements Runnable{
             Server.getInstance().removeClient(userID);
           }catch(IOException e){
             e.printStackTrace();
+          }
+          boolean updateLastTime=SqlHandlerPasswords.updateLastLoginTime(userID,LocalDateTime.now());
+          if(updateLastTime){
+            LOGGER.info("Zaktualizowano czas ostatniej logowania uzytkownika {}",userID);
+          }else{
+            LOGGER.info("Bład podczas aktualizacji czasu ostatniej logowania uzytkownika {}",userID);
           }
         }
     }

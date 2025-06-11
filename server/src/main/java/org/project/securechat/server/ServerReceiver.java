@@ -8,7 +8,6 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 
-import org.project.securechat.server.sql.SqlExecutor;
 import org.project.securechat.sharedClass.*;
 
 import org.apache.logging.log4j.LogManager;

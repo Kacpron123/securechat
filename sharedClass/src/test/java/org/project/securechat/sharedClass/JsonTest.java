@@ -3,8 +3,6 @@ package org.project.securechat.sharedClass;
 import org.junit.jupiter.api.*;
 import org.project.securechat.sharedClass.Message.DataType;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.IOException;
 /**
  * Unit test for simple App.

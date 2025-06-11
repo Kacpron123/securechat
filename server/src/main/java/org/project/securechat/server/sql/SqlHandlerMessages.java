@@ -30,8 +30,7 @@ public class SqlHandlerMessages {
     "sender_id VARCHAR(50) NOT NULL," +
     "chat_id VARCHAR(100) NOT NULL," +
     "data TEXT NOT NULL," +
-    "timestamp DATETIME NOT NULL,"+
-    "status VARCHAR(20) NOT NULL DEFAULT 'unread'"
+    "timestamp DATETIME NOT NULL"
      +");";
 
 
