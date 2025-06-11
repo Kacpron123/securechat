@@ -124,7 +124,7 @@ public class Login implements Runnable {
           out.writeUTF("Registration successful. Please log in with your new credentials.");
            out.flush();
           // Po rejestracji, spróbujemy od razu zalogować nowym loginem
-          return attemptLoginWithPassword(SqlHandlerPasswords.getUserPassword(loginAttempt) != null ? loginAttempt : null);
+          return loginAttempt;
         } else {
           out.writeUTF("Registration failed or login already exists.");
            out.flush();
