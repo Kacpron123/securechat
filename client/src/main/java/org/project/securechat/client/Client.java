@@ -58,7 +58,7 @@ public class Client {
           break;
         }
         clientOutputQueue.put(messageForServer);
-        Thread.sleep(500);
+        Thread.sleep(2000);
         String response = Client.status.poll();
         LOGGER.info("Status {}", response);
         if (response != null && response.equals("OK")) {
