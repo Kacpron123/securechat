@@ -23,6 +23,7 @@ public class SqlTest
     SQLiteTableViewer.main(null);
   }
   @Test
+  @Disabled
   void delete_database(){
     SqlHandlerPasswords.dropTable("users");
     SqlHandlerPasswords.dropTable("conversations");

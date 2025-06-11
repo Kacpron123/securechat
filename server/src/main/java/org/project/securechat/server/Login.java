@@ -109,8 +109,15 @@ public class Login implements Runnable {
     out.writeUTF("Enter login:");
      out.flush();
     loginAttempt = preClientInputQueue.take();
-    LOGGER.info("Attempt {} - received login {} from client {}", attemptNumber, loginAttempt,
-        clientSocket.getInetAddress());
+    if(Server.getSocket(loginAttempt)!=null){
+      LOGGER.error("User {} already logged in", loginAttempt);
+      out.writeUTF("User already logged in.");
+        out.flush();
+      return null;
+    }else{
+      LOGGER.info("Attempt {} - received login {} from client {}", attemptNumber, loginAttempt,
+      clientSocket.getInetAddress());
+    }
 
     if (!SqlHandlerPasswords.doesUserExist(loginAttempt)) {
       LOGGER.info("Login {} not found in database.", loginAttempt);

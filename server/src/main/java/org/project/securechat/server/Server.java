@@ -13,7 +13,7 @@ public class Server {
   private static Server instance = null;
   private static final Logger LOGGER = LogManager.getLogger();
   private static final int PORT = 12345;
-  public final HashMap<String, ClientHandler> clients = new HashMap<>();
+  public static final HashMap<String, ClientHandler> clients = new HashMap<>();
 
   private Server() {
   }
@@ -48,7 +48,7 @@ public class Server {
     }
   }
 
-  ClientHandler getSocket(String login) {
+  static ClientHandler getSocket(String login) {
     return clients.get(login);
   }
 
