@@ -8,6 +8,7 @@ import java.util.HashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.project.securechat.server.sql.SqlHandlerPasswords;
 
 public class Server {
   private static Server instance = null;
@@ -24,7 +25,21 @@ public class Server {
     }
     return instance;
   }
-
+  boolean userActive(String login){
+    if(clients.get(login) != null){
+      return true;
+    }else{
+      return false;
+    }
+  }
+  boolean userExists(String login){
+    String user = SqlHandlerPasswords.getPublicKey(login);
+    if(user !=null){
+      return true;
+    }else{
+      return false;
+    }
+  }
   void addClient(ClientHandler client) {
     clients.put(client.getLogin(), client);
   }
