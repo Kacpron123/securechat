@@ -31,8 +31,9 @@ public class SqlHandlerPasswords {
   // Metoda do tworzenia tabeli
   public static void createUsersTable() {
     String sql = "CREATE TABLE IF NOT EXISTS users (" +
-        "login VARCHAR(50) PRIMARY KEY," +
-        "password TEXT NOT NULL," +
+        "user_id INTEGER PRIMARY KEY AUTOINCREMENT," +
+        "username VARCHAR(50) UNIQUE NOT NULL," +
+        "password VARCHAR(50) NOT NULL," + //for now is not hash for chcecking
         "rsa_public_key TEXT, "+ // 'data' jako TEXT dla daty
         "last_login_time DATETIME"+ // 
         ");";
@@ -45,47 +46,47 @@ public class SqlHandlerPasswords {
       System.err.println("Błąd podczas tworzenia tabeli: " + e.getMessage());
     }
   }
-  public static boolean updateLastLoginTime(String login, LocalDateTime lastLoginTime) {
-    String sql = "UPDATE users SET last_login_time = ? WHERE login = ?";
+  public static boolean updateLastLoginTime(String username, LocalDateTime lastLoginTime) {
+    String sql = "UPDATE users SET last_login_time = ? WHERE username = ?";
     try (Connection conn = connect();
       PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, lastLoginTime.toString());
-      pstmt.setString(2, login);
+      pstmt.setString(2, username);
       
       int rowsAffected = pstmt.executeUpdate();
       return rowsAffected > 0;
     } catch (SQLException e) {
-      System.err.println("Błąd podczas aktualizacji czasu ostatniej logowania dla użytkownika '" + login + "': " + e.getMessage());
+      System.err.println("Błąd podczas aktualizacji czasu ostatniej logowania dla użytkownika '" + username + "': " + e.getMessage());
       return false;
     }
   }
 
   // Metoda do wstawiania danych
-  public static boolean insertUser(String login, String password) {
-    String sql = "INSERT INTO users(login, password,rsa_public_key,last_login_time) VALUES(?,?,?,?)";
+  public static boolean insertUser(String username, String password) {
+    String sql = "INSERT INTO users(username, password,rsa_public_key,last_login_time) VALUES(?,?,?,?)";
 
     try (Connection conn = connect();
         PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-      pstmt.setString(1, login);
+      pstmt.setString(1, username);
       pstmt.setString(2, password);
       pstmt.setNull(3, java.sql.Types.VARCHAR);
       pstmt.setString(4, LocalDateTime.now().toString());
       int rowsAffected = pstmt.executeUpdate();
       return rowsAffected == 1; // Jeśli dodano 1 wiersz, to sukces
     } catch (SQLException e) {
-      System.err.println("Błąd podczas wstawiania użytkownika '" + login + "': " + e.getMessage());
+      System.err.println("Błąd podczas wstawiania użytkownika '" + username + "': " + e.getMessage());
       return false;
     }
   }
-  public static boolean updateKey(String login, String rsaKey) {
-    String selectSql = "SELECT rsa_public_key FROM users WHERE login = ?";
-    String updateSql = "UPDATE users SET rsa_public_key = ? WHERE login = ?";
+  public static boolean updateKey(String username, String rsaKey) {
+    String selectSql = "SELECT rsa_public_key FROM users WHERE username = ?";
+    String updateSql = "UPDATE users SET rsa_public_key = ? WHERE username = ?";
 
     try (Connection conn = connect();
          PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
 
-        selectStmt.setString(1, login);
+        selectStmt.setString(1, username);
         ResultSet rs = selectStmt.executeQuery();
 
         if (rs.next()) {
@@ -102,7 +103,7 @@ public class SqlHandlerPasswords {
         // Klucz nie istnieje — aktualizujemy
         try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
             updateStmt.setString(1, rsaKey);
-            updateStmt.setString(2, login);
+            updateStmt.setString(2, username);
             updateStmt.executeUpdate();
             return true;
         }
@@ -112,13 +113,13 @@ public class SqlHandlerPasswords {
         return false;
     }
   }
-  public static String getPublicKey(String login) {
-    String sql = "SELECT rsa_public_key FROM users WHERE login = ?";
+  public static String getPublicKey(String username) {
+    String sql = "SELECT rsa_public_key FROM users WHERE username = ?";
 
     try (Connection conn = connect();
          PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-        pstmt.setString(1, login);
+        pstmt.setString(1, username);
         ResultSet rs = pstmt.executeQuery();
 
         if (rs.next()) {
@@ -133,33 +134,33 @@ public class SqlHandlerPasswords {
     }
 }
 
-  public static String getUserPassword(String login) {
-    String sql = "SELECT password FROM users WHERE login = ?";
+  public static String getUserPassword(String username) {
+    String sql = "SELECT password FROM users WHERE username = ?";
     String password = null;
 
     try (Connection conn = connect();
         PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-      pstmt.setString(1, login);
+      pstmt.setString(1, username);
       ResultSet rs = pstmt.executeQuery();
 
       if (rs.next()) {
         password = rs.getString("password");
       }
     } catch (SQLException e) {
-      System.err.println("Błąd podczas pobierania hasła dla użytkownika '" + login + "': " + e.getMessage());
+      System.err.println("Błąd podczas pobierania hasła dla użytkownika '" + username + "': " + e.getMessage());
     }
     return password;
   }
 
-  public static boolean doesUserExist(String login) {
-    String sql = "SELECT COUNT(*) FROM users WHERE login = ?";
+  public static boolean doesUserExist(String username) {
+    String sql = "SELECT COUNT(*) FROM users WHERE username = ?";
     boolean exists = false;
 
     try (Connection conn = connect();
         PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-      pstmt.setString(1, login);
+      pstmt.setString(1, username);
       ResultSet rs = pstmt.executeQuery();
 
       if (rs.next()) {
@@ -169,7 +170,7 @@ public class SqlHandlerPasswords {
         }
       }
     } catch (SQLException e) {
-      System.err.println("Błąd podczas sprawdzania istnienia użytkownika '" + login + "': " + e.getMessage());
+      System.err.println("Błąd podczas sprawdzania istnienia użytkownika '" + username + "': " + e.getMessage());
     }
     return exists;
   }
