@@ -152,32 +152,33 @@ public class SqlHandlerPasswords {
     }
     return password;
   }
-
-  public static boolean doesUserExist(String username) {
-    String sql = "SELECT COUNT(*) FROM users WHERE username = ?";
-    boolean exists = false;
-
-    try (Connection conn = connect();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-      pstmt.setString(1, username);
-      ResultSet rs = pstmt.executeQuery();
-
-      if (rs.next()) {
-        // Jeśli COUNT(*) zwróci wartość większą od 0, to użytkownik istnieje
-        if (rs.getInt(1) > 0) {
-          exists = true;
-        }
+  /**
+   * Retrieves the user ID for the specified username.
+   *
+   * @param username the username for which to retrieve the user ID
+   * @return the user ID if the username exists in the database, or -1 if not found
+   */
+  public static long getUserId(String username){
+    String sql="SELECT user_id from users WHERE username = ?";
+    try(PreparedStatement ps=connect().prepareStatement(sql)){
+      ps.setString(1, username);
+      try(ResultSet rs=ps.executeQuery()){
+        if(rs.next())
+          return rs.getLong("user_id");
       }
-    } catch (SQLException e) {
-      System.err.println("Błąd podczas sprawdzania istnienia użytkownika '" + username + "': " + e.getMessage());
+    }catch(SQLException e){
+      System.err.println("Błąd podczas sprawdzania użytkownika '"+username+"' "+e.getMessage());
     }
-    return exists;
+    return -1;
   }
+/**
+ * Drops a table from the database if it exists.
+ *
+ * @param tableName the name of the table to be dropped
+ */
 
   public static void dropTable(String tableName) {
-    // Instrukcja DROP TABLE. Klauzula IF EXISTS zapobiega błędowi, jeśli tabela nie
-    // istnieje.
+    // DROP TABLE statement with IF EXISTS clause to avoid an error if the table does not exist.
     String sql = "DROP TABLE IF EXISTS " + tableName;
 
     try (Connection conn = connect();
