@@ -119,7 +119,7 @@ public class Login implements Runnable {
       clientSocket.getInetAddress());
     }
 
-    if (!SqlHandlerPasswords.doesUserExist(loginAttempt)) {
+    if (SqlHandlerPasswords.getUserId(loginAttempt)==-1) {
       LOGGER.info("Login {} not found in database.", loginAttempt);
       out.writeUTF("Login not found.");
        out.flush();
@@ -165,7 +165,7 @@ public class Login implements Runnable {
     }
 
 
-    if (!SqlHandlerPasswords.doesUserExist(newLogin)) {
+    if (SqlHandlerPasswords.getUserId(newLogin)==-1) {
       if (SqlHandlerPasswords.insertUser(newLogin, newPassword)) {
         LOGGER.info("New user registered: {}", newLogin);
         firstTime = true;

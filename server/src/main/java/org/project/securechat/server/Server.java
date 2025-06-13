@@ -8,7 +8,7 @@ import java.util.HashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.project.securechat.server.sql.SqlHandlerPasswords;
+import org.project.securechat.server.sql.*;
 
 public class Server {
   private static Server instance = null;
@@ -17,6 +17,9 @@ public class Server {
   public static final HashMap<String, ClientHandler> clients = new HashMap<>();
 
   private Server() {
+    SqlHandlerPasswords.createUsersTable();
+    SqlHandlerConversations.createChatRelated();
+    SqlHandlerMessages.createMessagesTable();
   }
 
   public static Server getInstance() {
