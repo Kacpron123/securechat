@@ -31,7 +31,7 @@ public class SqlHandlerPasswords {
   // Metoda do tworzenia tabeli
   public static void createUsersTable() {
     String sql = "CREATE TABLE IF NOT EXISTS users (" +
-        "user_id INTEGER PRIMARY KEY AUTOINCREMENT," +
+        "user_id BIGINT PRIMARY KEY AUTOINCREMENT," +
         "username VARCHAR(50) UNIQUE NOT NULL," +
         "password VARCHAR(50) NOT NULL," + //for now is not hash for chcecking
         "rsa_public_key TEXT, "+ // 'data' jako TEXT dla daty
