@@ -3,3 +3,6 @@ server/target
 sharedClass/target
 key.pub
 key.priv
+*.db
+.vscode
+.gitignore
