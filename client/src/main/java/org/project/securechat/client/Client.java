@@ -58,6 +58,8 @@ public class Client {
         Thread.sleep(2000);
         String response = Client.status.poll();
         LOGGER.info("Status {}", response);
+        // TODO: checkinng error and aborting
+        // correct logged
         if (response != null && response.equals("OK")) {
           LOGGER.info("LOGOWANIE UDANE");
           ClientListener cListener = new ClientListener(clientOutputQueue, executor, userInput);

@@ -1,6 +1,5 @@
 package org.project.securechat.client;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -127,7 +126,7 @@ public class ClientReceiver implements Runnable {
   }
 
   private void initCommandHandlers() {
-    commandHandlers.put(DataType.GET_RSA_KEY, msg -> {
+    commandHandlers.put(DataType.RSA_KEY, msg -> {
       LOGGER.info("ODEBRALEM KLUCZ OD SERWERA DLA {}",msg.getChatID());
       String rsaKey = msg.getData();
       String forWho = msg.getChatID();

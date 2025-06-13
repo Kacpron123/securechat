@@ -1,11 +1,13 @@
 package org.project.securechat.server;
 import org.project.securechat.server.sql.SqlExecutor;
 import org.project.securechat.server.sql.SqlHandlerConversations;
+import org.project.securechat.server.sql.SqlHandlerMessages;
 import org.project.securechat.server.sql.SqlHandlerPasswords;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.lang.Runnable;
@@ -31,6 +33,17 @@ public class ClientHandler implements Runnable{
         this.clientInputQueue=preClientInputQueue;
         this.out=out;
         this.executor = executor;
+      List<Message> olderMessages = SqlHandlerMessages.getOlderMessages(userID,LocalDateTime.now());
+      for(Message m:olderMessages){
+        try{
+          String jsonMessage = JsonConverter.parseObjectToJson(m);
+          sendMessage(jsonMessage);
+        }catch(IOException e){
+          // LOGGER.error("error in sending old message to {}",userID);
+          
+        }
+      }
+      
     }
     public String getLogin(){
       return userID;
@@ -43,14 +56,14 @@ public class ClientHandler implements Runnable{
          if(mess.getDataType().equals(DataType.TEXT)){
           executor.submit(() -> new SqlExecutor(mess));
          }
-        else if(mess.getDataType().equals(DataType.GET_RSA_KEY)){
+        else if(mess.getDataType().equals(DataType.RSA_KEY)){
           String rsaKey = SqlHandlerPasswords.getPublicKey(mess.getChatID());
           if(rsaKey==null){
             LOGGER.info("BRAK KLUCZA W BAZIE");
           }else{
             LOGGER.info("KLUCZ W BAZIE WYSYLAM");
           }
-          Message messToSend = new Message(mess.getSenderID(),mess.getChatID(),DataType.GET_RSA_KEY,rsaKey);
+          Message messToSend = new Message(mess.getSenderID(),mess.getChatID(),DataType.RSA_KEY,rsaKey);
          
            out.writeUTF(JsonConverter.parseObjectToJson(messToSend));
            out.flush();
@@ -130,17 +143,17 @@ public class ClientHandler implements Runnable{
               LOGGER.error(e);
             }
           }
-          if(mess.getChatID() != null && true==false){
-             Server server = Server.getInstance();
-             if(server.clients.get(mess.getChatID())!=null){
-              try{
-                  server.clients.get(mess.getChatID()).sendMessage(JsonConverter.parseObjectToJson(mess));
-              }catch(IOException e){
-                LOGGER.error(e);
-              }
+          // if(mess.getChatID() != null && true==false){
+          //    Server server = Server.getInstance();
+          //    if(server.clients.get(mess.getChatID())!=null){
+          //     try{
+          //         server.clients.get(mess.getChatID()).sendMessage(JsonConverter.parseObjectToJson(mess));
+          //     }catch(IOException e){
+          //       LOGGER.error(e);
+          //     }
               
-             };
-          }
+          //    };
+          // }
           }
           
           }

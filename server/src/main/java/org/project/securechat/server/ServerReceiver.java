@@ -37,7 +37,7 @@ public class ServerReceiver implements Runnable {
       while (!Thread.currentThread().isInterrupted()) {
         message = in.readUTF();
        // mess = JsonConverter.parseDataToObject(message, Message.class);
-        
+        // TODO saving files
         serverInputQueue.put(message);
         /* 
        try{

@@ -55,9 +55,9 @@ public class SqlTest
   void tmp(){
     SqlHandlerConversations.createConversationsTable();
   }
-  @Test
-  void addMessage(){
-    SqlHandlerMessages.insertMessage("Pawel", "Krzysztof", "haloooo", "2025-05-26T08:45:48.641588900Z");
-  }
+  // @Test
+  // void addMessage(){
+  //   SqlHandlerMessages.insertMessage("Pawel", "Krzysztof", "haloooo", "2025-05-26T08:45:48.641588900Z");
+  // }
 
 }

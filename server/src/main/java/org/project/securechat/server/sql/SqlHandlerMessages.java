@@ -26,9 +26,9 @@ public class SqlHandlerMessages {
   }
    public static void createMessagesTable() {
    String sql = "CREATE TABLE IF NOT EXISTS messages (" +
-    "id BIGINT PRIMARY KEY AUTOINCREMENT," +
-    "sender_id BIGINT NOT NULL," +
-    "chat_id BIGINT NOT NULL," +
+    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+    "sender_id INTEGER NOT NULL," +
+    "chat_id INTEGER NOT NULL," +
     "data TEXT NOT NULL," +
     "timestamp DATETIME NOT NULL"
      +");";
@@ -39,7 +39,7 @@ public class SqlHandlerMessages {
       stmt.execute(sql);
       System.out.println("Tabela 'messages' została utworzona (jeśli nie istniała).");
     } catch (SQLException e) {
-      System.err.println("Błąd podczas tworzenia tabeli: " + e.getMessage());
+      System.err.println("Błąd podczas tworzenia tabeli 'messages': " + e.getMessage());
     }
   }
 public static void insertMessage(long senderId, long  chatId,
@@ -66,8 +66,16 @@ public static void insertMessage(long senderId, long  chatId,
         e.printStackTrace();
     }
 }
-public static List<Message> getOlderMessages(long userId,LocalDateTime loginDate){
+/**
+ * Retrieves list of messages sent to user after specified login date.
+ * 
+ * @param username For now, TODO: change to long, username of user
+ * @param loginDate Login date of the user
+ * @return List of messages sent to user after loginDate
+ */
+public static List<Message> getOlderMessages(String username,LocalDateTime loginDate){
   //chincking server he is in:
+  long userId=SqlHandlerPasswords.getUserId(username);
   List<Message> messages = new ArrayList<>();
   String sql = "SELECT m.sender_id, m.chat_id, m.data, m.timestamp " +
     "FROM messages m " +
