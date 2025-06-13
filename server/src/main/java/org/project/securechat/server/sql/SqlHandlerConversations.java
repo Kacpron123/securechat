@@ -90,4 +90,54 @@ public static Map<String, String> getConversation(String user1,String user2) {
 
     return result.isEmpty() ? null : result;
 }
+  private static void createChatTable() {
+  String sql = "CREATE TABLE IF NOT EXISTS chats (" +
+    "chat_id BIGINT AUTO_INCREMENT PRIMARY KEY," +
+    "chat_name VARCHAR(50) NOT NULL," +
+    "is_group_chat BOOLEAN DEFAULT FALSE NOT NULL"+
+    ");";
+
+    try (Connection conn = connect();
+        Statement stmt = conn.createStatement()) {
+      stmt.execute(sql);
+      System.out.println("Tabela 'chats' została utworzona (jeśli nie istniała).");
+    } catch (SQLException e) {
+      System.err.println("Błąd podczas tworzenia tabeli: " + e.getMessage());
+    }
+  }
+  
+  private static void createChatParticipantsTable() {
+  String sql = "CREATE TABLE IF NOT EXISTS chat_participant (" +
+    "chat_id INTEGER NOT NULL," +
+    "user_id INTEGER NOT NULL," +
+    "encrypted_aes_key VARBINARY(250) NOT NULL," + 
+    "PRIMARY KEY (chat_id,user_id)," +
+    "FOREIGN KEY (chat_id) REFERENCES chats(chat_id) ON DELETE CASCADE ON UPDATE CASCADE,"+
+    "FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE"+
+    ");";
+
+    try (Connection conn = connect();
+        Statement stmt = conn.createStatement()) {
+      stmt.execute(sql);
+      System.out.println("Tabela 'chats' została utworzona (jeśli nie istniała).");
+    } catch (SQLException e) {
+      System.err.println("Błąd podczas tworzenia tabeli: " + e.getMessage());
+    }
+  }
+  public static void createChatRelated(){
+    createChatParticipantsTable();
+    createChatTable();
+  }
+  public static long insertOneToOneChat(long user1_id,long user2_id,String aes1,String aes2) throws SQLException{
+    // TODO creating chat
+    return 0;
+  }
+  public static void insertGroupChat(){
+
+  }
+  public static void insertUsertoChat(){
+
+  }
+  
+
 }

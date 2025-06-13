@@ -5,6 +5,7 @@ import org.project.securechat.server.sql.SqlHandlerPasswords;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.lang.Runnable;
@@ -56,7 +57,17 @@ public class ClientHandler implements Runnable{
         }else if(mess.getDataType().equals(DataType.AES_EXCHANGE)){
           AesPair aesPair = JsonConverter.parseDataToObject(mess.getData(), AesPair.class);
 
-          SqlHandlerConversations.insertConversation(mess.getSenderID(), mess.getChatID(), aesPair.getAesSender(),aesPair.getAesReceiver());
+          long user1=SqlHandlerPasswords.getUserId(mess.getSenderID());
+          long user2=SqlHandlerPasswords.getUserId(mess.getChatID());
+          if(user1==-1 || user2==-1) //nie ma user
+            return null;
+
+          try{
+            SqlHandlerConversations.insertOneToOneChat(user1, user2, aesPair.getAesSender(), aesPair.getAesReceiver());
+          }catch(SQLException e){
+            LOGGER.error("creating new chat1-1 {}",e.getMessage());
+          }
+          // SqlHandlerConversations.insertConversation(mess.getSenderID(), mess.getChatID(), aesPair.getAesSender(),aesPair.getAesReceiver());
          // Map<String,String> conversation = SqlHandlerConversations.getConversation(mess.getSenderID(),mess.getChatID());
 
           //aesPair = new AesPair(conversation.get("aes_key_for_user1"),conversation.get("aes_key_for_user2"),conversation.get("user1"),conversation.get("user2"));
