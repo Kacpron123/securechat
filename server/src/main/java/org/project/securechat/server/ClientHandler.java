@@ -7,14 +7,17 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 import java.lang.Runnable;
 import java.time.LocalDateTime;
 
- import org.apache.logging.log4j.LogManager;
- import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.project.securechat.sharedClass.Message.DataType;
 import org.project.securechat.sharedClass.*;
 
@@ -24,7 +27,7 @@ public class ClientHandler implements Runnable{
     private ExecutorService executor ;
     DataOutputStream out;
     public String userID;
-    
+    private final Map<Message.DataType,Function<Message,Message>> commandHandler= new HashMap<>();
     BlockingQueue<String> clientInputQueue;
 
     public ClientHandler(Socket socket,String userID, BlockingQueue<String> preClientInputQueue, DataOutputStream out,ExecutorService executor){
@@ -33,48 +36,56 @@ public class ClientHandler implements Runnable{
         this.clientInputQueue=preClientInputQueue;
         this.out=out;
         this.executor = executor;
-      List<Message> olderMessages = SqlHandlerMessages.getOlderMessages(userID,LocalDateTime.now());
-      for(Message m:olderMessages){
-        try{
-          String jsonMessage = JsonConverter.parseObjectToJson(m);
-          sendMessage(jsonMessage);
-        }catch(IOException e){
-          // LOGGER.error("error in sending old message to {}",userID);
-          
-        }
+        initCommandHandlers();
+        List<Message> olderMessages = SqlHandlerMessages.getOlderMessages(userID,LocalDateTime.now());
+        for(Message m:olderMessages){
+          try{
+            String jsonMessage = JsonConverter.parseObjectToJson(m);
+            sendMessage(jsonMessage);
+          }catch(IOException e){
+            // LOGGER.error("error in sending old message to {}",userID);
+          }
       }
       
     }
-    public String getLogin(){
-      return userID;
-    }
-    Message processMessage(String message){
-      LOGGER.info("Otrzymalem ta wiadomosc {} : {}",userID,message);
-      try{
-         Message mess = JsonConverter.parseDataToObject(message,Message.class);
-         LOGGER.info("WIADOMOSC SPARSOWANA");
-         if(mess.getDataType().equals(DataType.TEXT)){
-          executor.submit(() -> new SqlExecutor(mess));
-         }
-        else if(mess.getDataType().equals(DataType.RSA_KEY)){
-          String rsaKey = SqlHandlerPasswords.getPublicKey(mess.getChatID());
-          if(rsaKey==null){
-            LOGGER.info("BRAK KLUCZA W BAZIE");
-          }else{
-            LOGGER.info("KLUCZ W BAZIE WYSYLAM");
-          }
-          Message messToSend = new Message(mess.getSenderID(),mess.getChatID(),DataType.RSA_KEY,rsaKey);
-         
-           out.writeUTF(JsonConverter.parseObjectToJson(messToSend));
-           out.flush();
-        }else if(mess.getDataType().equals(DataType.AES_EXCHANGE)){
-          AesPair aesPair = JsonConverter.parseDataToObject(mess.getData(), AesPair.class);
-
-          long user1=SqlHandlerPasswords.getUserId(mess.getSenderID());
-          long user2=SqlHandlerPasswords.getUserId(mess.getChatID());
+    private void initCommandHandlers(){
+      commandHandler.put(DataType.CLOSE_CONNECTION,msg->{
+        executor.shutdownNow();
+        LOGGER.info("watek ClientHandler przerwany");
+        Thread.currentThread().interrupt();
+        
+        try{
+          socket.close();
+        }
+        catch(IOException e){
+          LOGGER.error(e);
+        }
+        return null;
+      });
+      commandHandler.put(DataType.RSA_KEY,msg->{
+        String rsaKey = SqlHandlerPasswords.getPublicKey(msg.getChatID());
+        LOGGER.info((rsaKey == null) ? "BRAK KLUCZA W BAZIE" : "KLUCZ W BAZIE WYSYLAM");
+        try{
+          out.writeUTF(JsonConverter.parseObjectToJson(new Message(msg.getSenderID(),msg.getChatID(),DataType.RSA_KEY,rsaKey)));
+          out.flush();
+        }catch(IOException e){
+          LOGGER.error(e);
+        }
+         return null;
+      });
+      commandHandler.put(DataType.TEXT,msg->{
+        executor.submit(() -> new SqlExecutor(msg));
+        return null;
+      });
+      commandHandler.put(DataType.AES_EXCHANGE,msg->{
+        try{
+          AesPair aesPair = JsonConverter.parseDataToObject(msg.getData(), AesPair.class);
+  
+          long user1=SqlHandlerPasswords.getUserId(msg.getSenderID());
+          long user2=SqlHandlerPasswords.getUserId(msg.getChatID());
           if(user1==-1 || user2==-1) //nie ma user
             return null;
-
+  
           try{
             if(user1>user2)
               SqlHandlerConversations.insertOneToOneChat(user2, user1, aesPair.getAesReceiver(), aesPair.getAesSender());
@@ -84,24 +95,22 @@ public class ClientHandler implements Runnable{
             LOGGER.error("creating new chat1-1 {}",e.getMessage());
           }
           // SqlHandlerConversations.insertConversation(mess.getSenderID(), mess.getChatID(), aesPair.getAesSender(),aesPair.getAesReceiver());
-         // Map<String,String> conversation = SqlHandlerConversations.getConversation(mess.getSenderID(),mess.getChatID());
-
+          // Map<String,String> conversation = SqlHandlerConversations.getConversation(mess.getSenderID(),mess.getChatID());
+  
           //aesPair = new AesPair(conversation.get("aes_key_for_user1"),conversation.get("aes_key_for_user2"),conversation.get("user1"),conversation.get("user2"));
           Message messToSend = new Message(aesPair.getSender(),aesPair.getReceiver(),DataType.AES_EXCHANGE,JsonConverter.parseObjectToJson(aesPair));
           out.writeUTF(JsonConverter.parseObjectToJson(messToSend));
           out.flush();
+        }catch(IOException e){
+          LOGGER.error(e);
         }
-
-                
-         return null;
-         //return mess;
-      }
-     catch(IOException  e){
-      LOGGER.error(e);
-
-     }
-     return null;
+        return null;
+      });
     }
+    public String getLogin(){
+      return userID;
+    }
+    
     public void sendMessage(String message){
       try{  
          out.writeUTF(message);
@@ -128,36 +137,15 @@ public class ClientHandler implements Runnable{
       try{
         
         LOGGER.info("Starting ClientHandler: {}",userID);
-      
         String message=null;
         while(!Thread.currentThread().isInterrupted()){
           message=clientInputQueue.take();
-          Message mess = processMessage(message);
-          if(mess!=null){
-            if(mess.getDataType().equals(DataType.CLOSE_CONNECTION)){
-            executor.shutdownNow();
-            LOGGER.error("watek ClientHandler przerwany");
-            Thread.currentThread().interrupt();
-            
-            try{
-              socket.close();
+          try{
+            Message mess = JsonConverter.parseDataToObject(message,Message.class);
+            commandHandler.get(mess.getDataType()).apply(mess);
+          }catch(IOException e){
+            LOGGER.info(e);
             }
-            catch(IOException e){
-              LOGGER.error(e);
-            }
-          }
-          // if(mess.getChatID() != null && true==false){
-          //    Server server = Server.getInstance();
-          //    if(server.clients.get(mess.getChatID())!=null){
-          //     try{
-          //         server.clients.get(mess.getChatID()).sendMessage(JsonConverter.parseObjectToJson(mess));
-          //     }catch(IOException e){
-          //       LOGGER.error(e);
-          //     }
-              
-          //    };
-          // }
-          }
           
           }
          
