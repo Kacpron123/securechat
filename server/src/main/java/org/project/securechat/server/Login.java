@@ -45,11 +45,6 @@ public class Login implements Runnable {
   @Override
   public void run() {
     try {
-      // Uruchom wątek odbiorczy klienta od razu
-      receiver = new ServerReceiver(in, preClientInputQueue,executor);
-      
-      executor.submit(receiver);
-      LOGGER.info("ClientReceiver thread started for client: {}", clientSocket.getInetAddress());
 
       // --- Faza logowania/rejestracji ---
       // Użytkownik ma 3 próby na poprawne zalogowanie lub zarejestrowanie się
@@ -108,7 +103,7 @@ public class Login implements Runnable {
 
     out.writeUTF("Enter login:");
      out.flush();
-    loginAttempt = preClientInputQueue.take();
+    loginAttempt = in.readUTF();
     if(Server.getSocket(loginAttempt)!=null){
       LOGGER.error("User {} already logged in", loginAttempt);
       out.writeUTF("User already logged in.");
@@ -125,7 +120,7 @@ public class Login implements Runnable {
        out.flush();
       out.writeUTF("Do you want to register? [type /register]");
         out.flush();
-      String registerResponse = preClientInputQueue.take();
+      String registerResponse = in.readUTF();
       if (registerResponse.trim().equalsIgnoreCase("/register")) {
         if (handleRegistration(loginAttempt)) {
           out.writeUTF("Registration successful. Please log in with your new credentials.");
@@ -152,11 +147,11 @@ public class Login implements Runnable {
     
     out.writeUTF("Enter new password:");
      out.flush();
-     String newPassword = preClientInputQueue.take();
+     String newPassword = in.readUTF();
      
     out.writeUTF("Enter same new password:");
     out.flush();
-    String newPassword2 = preClientInputQueue.take();
+    String newPassword2 = in.readUTF();
     
     if (!newPassword.equals(newPassword2)) {
       out.writeUTF("Passwords do not match. Please try again.");
@@ -191,7 +186,7 @@ public class Login implements Runnable {
     for (int i = 0; i < 3; i++) {
       out.writeUTF("Enter Password: ");
        out.flush();
-      String password = preClientInputQueue.take();
+      String password = in.readUTF();
 
       String storedPassword = SqlHandlerPasswords.getUserPassword(login);
 
@@ -212,7 +207,6 @@ public class Login implements Runnable {
   }
 
   private void startMainClientHandler(String login) throws IOException,InterruptedException {
-
     // Zakładam, że ClientHandler ma konstruktor(Socket, String login,
     // BlockingQueue, DataOutputStream)
     if(firstTime == true || SqlHandlerPasswords.getPublicKey(login)== null){
@@ -223,8 +217,8 @@ public class Login implements Runnable {
       LOGGER.info("WYSYLAM WIADOMOSC Z PROSBA O KLUCZ");
       out.writeUTF(JsonConverter.parseObjectToJson(mess));
       out.flush();
-
-      String key = preClientInputQueue.take();
+      Thread.sleep(200);
+      String key = in.readUTF();
       LOGGER.info("ODEBRALEM WIADOMOSC {}",key);
       mess = JsonConverter.parseDataToObject(key, Message.class);
       
@@ -245,6 +239,12 @@ public class Login implements Runnable {
      out.flush();
     }
     
+    // start receiver here
+    receiver = new ServerReceiver(in, preClientInputQueue,executor);
+      
+    executor.submit(receiver);
+    LOGGER.info("ClientReceiver thread started for client: {}", clientSocket.getInetAddress());
+
     ClientHandler handler = new ClientHandler(clientSocket, login, preClientInputQueue, out,executor);
     Server.getInstance().addClient(handler);
     
