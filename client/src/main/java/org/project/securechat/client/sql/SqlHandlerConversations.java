@@ -12,7 +12,7 @@ import java.util.Map;
 public class SqlHandlerConversations {
    private static final String DB_URL = "jdbc:sqlite:client_database.db";
 
-     private static Connection connect() {
+    private static Connection connect() {
     Connection conn = null;
     try {
       conn = DriverManager.getConnection(DB_URL);
@@ -60,6 +60,32 @@ public class SqlHandlerConversations {
         e.printStackTrace();
     }
 }
+  public static void createChatRelated(){
+    String sqlchat = "CREATE TABLE IF NOT EXISTS chats (" +
+      "chat_id INTEGER PRIMARY KEY," +
+      "chat_name VARCHAR(50) NOT NULL ," +
+      "is_group_chat BOOLEAN DEFAULT FALSE NOT NULL ," +
+      "AES_KEY VARCHAR(250) NOT NULL" +
+      ");";
+    String sqlfriend = "CREATE TABLE IF NOT EXISTS chat_member (" +
+      "chat_id INTEGER NOT NULL," +
+      "user_id INTEGER NOT NULL" +
+      "PRIMARY KEY  (chat_id, user_id), "+
+      "FOREIGN KEY (chat_id) REFERENCES chats(chat_id) ON DELETE CASCADE, "+
+      "FOREIGN KEY (user_id) REFERENCES friends(user_id) ON DELETE CASCADE, "+
+      ");";
+
+    try (Connection conn = connect();
+        Statement stmt = conn.createStatement()) {
+      stmt.execute(sqlchat);
+      stmt.execute(sqlfriend);
+      System.out.println("Tabele 'chat' i 'chat_member' zostały utworzone (jeśli nie istniały).");
+    } catch (SQLException e) {
+      System.err.println("Błąd podczas tworzenia tabel: " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
+  // public static void createChat(long id, )
 public static Map<String, String> getConversation(String user1,String user2) {
   String[] chatId = {user1,user2};
   

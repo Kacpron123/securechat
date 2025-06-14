@@ -24,7 +24,7 @@ public class SqlTestClient
   // @Test
   void delete_database(){
      SQLiteTableViewer.dropTable("conversations");
-     SQLiteTableViewer.dropTable("rsa_public_keys");
+     SQLiteTableViewer.dropTable("rsa_friends");
   }
   @Test 
   void check_sorting(){

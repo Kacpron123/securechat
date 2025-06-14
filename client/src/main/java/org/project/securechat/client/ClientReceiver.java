@@ -26,7 +26,7 @@ public class ClientReceiver implements Runnable {
   private ExecutorService executor;
 
   private HashMap<String, BlockingDeque<Message>> chatQueues = new HashMap<>();
- private final Map<DataType, Consumer<Message>> commandHandlers = new HashMap<>();
+  private final Map<DataType, Consumer<Message>> commandHandlers = new HashMap<>();
   public ClientReceiver(DataInputStream in, BlockingQueue<String> inputQueue, BlockingQueue<String> clientOutputQueue,
      ExecutorService executor) {
     this.in = in;
