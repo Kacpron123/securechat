@@ -92,7 +92,7 @@ public static Map<String, String> getConversation(String user1,String user2) {
 }
   private static void createChatTable() {
   String sql = "CREATE TABLE IF NOT EXISTS chats (" +
-    "chat_id INTEGER AUTO_INCREMENT PRIMARY KEY," +
+    "chat_id INTEGER PRIMARY KEY AUTOINCREMENT," +
     "chat_name VARCHAR(50) NOT NULL," +
     "is_group_chat BOOLEAN DEFAULT FALSE NOT NULL"+
     ");";
@@ -151,12 +151,12 @@ public static Map<String, String> getConversation(String user1,String user2) {
             // Start a transaction to ensure atomicity
             // If any part fails, the whole operation rolls back
             conn.setAutoCommit(false);
-
+            
             // 1. Insert into 'chats' table
             try (PreparedStatement pstmtChat = conn.prepareStatement(insertChatSql, Statement.RETURN_GENERATED_KEYS)) {
                 // A one-to-one chat might not have a specific name initially,
                 // or you could generate one like "User1 & User2 Chat"
-                pstmtChat.setString(1, "1-1 Chat with " + user1_id + " and " + user2_id); // Example name
+                pstmtChat.setString(1, "" + user1_id + ":" + user2_id);
                 pstmtChat.setBoolean(2, false); // This is a one-to-one chat, so is_group_chat is false
 
                 int affectedRows = pstmtChat.executeUpdate();

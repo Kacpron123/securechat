@@ -93,7 +93,7 @@ public class ClientListener implements Runnable {
           LOGGER.info("TWORZE KLUCZE AES");
           try{
             PublicKey headerKey = EncryptionService.getPublicKeyFromBytes(EncryptionService.getBytesFromString64((rsaKeyHeader)));
-            
+            LOGGER.warn("RSA public keys are:\nfriend\n{}\nmy\n{}",headerKey,pubKey);
             String aesKeyHeader = EncryptionService.encodeWithRsa(headerKey,aesKey.getEncoded());
             String aesKeyClient = EncryptionService.encodeWithRsa(pubKey, aesKey.getEncoded());
             LOGGER.info("STWORZYLEM KLUCZE DLA {} {}",Client.login,header);

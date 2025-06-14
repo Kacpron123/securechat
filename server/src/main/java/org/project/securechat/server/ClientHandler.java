@@ -76,7 +76,10 @@ public class ClientHandler implements Runnable{
             return null;
 
           try{
-            SqlHandlerConversations.insertOneToOneChat(user1, user2, aesPair.getAesSender(), aesPair.getAesReceiver());
+            if(user1>user2)
+              SqlHandlerConversations.insertOneToOneChat(user2, user1, aesPair.getAesReceiver(), aesPair.getAesSender());
+            else
+              SqlHandlerConversations.insertOneToOneChat(user1, user2, aesPair.getAesSender(), aesPair.getAesReceiver());
           }catch(SQLException e){
             LOGGER.error("creating new chat1-1 {}",e.getMessage());
           }

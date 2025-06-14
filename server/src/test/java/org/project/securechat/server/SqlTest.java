@@ -16,6 +16,7 @@ public class SqlTest
     SqlHandlerPasswords.createUsersTable();
     SqlHandlerConversations.createConversationsTable();
     SqlHandlerMessages.createMessagesTable();
+    SqlHandlerConversations.createChatRelated();
     //SqlHandlerPasswords.dropTable("users");
   }
   @Test
@@ -24,9 +25,11 @@ public class SqlTest
   }
   // @Test
   void delete_database(){
-    SqlHandlerPasswords.dropTable("users");
-    SqlHandlerPasswords.dropTable("conversations");
-    SqlHandlerPasswords.dropTable("messages");
+    // SqlHandlerPasswords.dropTable("users");
+    // SqlHandlerPasswords.dropTable("conversations");
+    // SqlHandlerPasswords.dropTable("messages");
+    SqlHandlerPasswords.dropTable("chats");
+    SqlHandlerPasswords.dropTable("chat_participant");
     SQLiteTableViewer.main(null);
   }
   @Test
