@@ -8,6 +8,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.project.securechat.client.sql.SqlHandlerConversations;
+import org.project.securechat.client.sql.SqlHandlerRsa;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -31,7 +33,10 @@ public class Client {
   private DataInputStream in;
   private BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in,StandardCharsets.UTF_8));
   static public String login;
-
+  public Client(){
+    SqlHandlerConversations.createConversationsTable();
+    SqlHandlerRsa.createRsaTable();
+  }
   public void start() {
     try {
       socket = new Socket(SERVER_HOST, SERVER_PORT);
@@ -58,6 +63,8 @@ public class Client {
         Thread.sleep(2000);
         String response = Client.status.poll();
         LOGGER.info("Status {}", response);
+        // TODO: checkinng error and aborting
+        // correct logged
         if (response != null && response.equals("OK")) {
           LOGGER.info("LOGOWANIE UDANE");
           ClientListener cListener = new ClientListener(clientOutputQueue, executor, userInput);

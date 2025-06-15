@@ -11,7 +11,7 @@ public class SqlExecutor implements Runnable{
   public void run(){
     if(message.getDataType().equals(DataType.TEXT)){
       if(message.getChatID()!= null){
-          SqlHandlerMessages.insertMessage(message.getSenderID(), message.getChatID(), message.getData(), message.getTimestamp().toString());
+          // SqlHandlerMessages.insertMessage(message.getSenderID(), message.getChatID(), message.getData(), message.getTimestamp().toString());
       }
     
     }

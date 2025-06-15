@@ -1,6 +1,5 @@
 package org.project.securechat.client;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -27,7 +26,7 @@ public class ClientReceiver implements Runnable {
   private ExecutorService executor;
 
   private HashMap<String, BlockingDeque<Message>> chatQueues = new HashMap<>();
- private final Map<DataType, Consumer<Message>> commandHandlers = new HashMap<>();
+  private final Map<DataType, Consumer<Message>> commandHandlers = new HashMap<>();
   public ClientReceiver(DataInputStream in, BlockingQueue<String> inputQueue, BlockingQueue<String> clientOutputQueue,
      ExecutorService executor) {
     this.in = in;
@@ -127,7 +126,7 @@ public class ClientReceiver implements Runnable {
   }
 
   private void initCommandHandlers() {
-    commandHandlers.put(DataType.GET_RSA_KEY, msg -> {
+    commandHandlers.put(DataType.RSA_KEY, msg -> {
       LOGGER.info("ODEBRALEM KLUCZ OD SERWERA DLA {}",msg.getChatID());
       String rsaKey = msg.getData();
       String forWho = msg.getChatID();

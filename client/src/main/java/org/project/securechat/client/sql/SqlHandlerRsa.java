@@ -20,7 +20,8 @@ public class SqlHandlerRsa {
     return conn;
   }
     public static void createRsaTable() {
-  String sql = "CREATE TABLE IF NOT EXISTS public_keys (" +
+  String sql = "CREATE TABLE IF NOT EXISTS friends (" +
+    // "user_id INTEGER PRIMARY_KEY, "+
     "login VARCHAR(100) PRIMARY KEY," +
     "rsa_public_key TEXT" +
 ");";
@@ -28,13 +29,14 @@ public class SqlHandlerRsa {
     try (Connection conn = connect();
         Statement stmt = conn.createStatement()) {
       stmt.execute(sql);
-      System.out.println("Tabela 'public_keys' została utworzona (jeśli nie istniała).");
+      System.out.println("Tabela 'friends' została utworzona (jeśli nie istniała).");
     } catch (SQLException e) {
       System.err.println("Błąd podczas tworzenia tabeli: " + e.getMessage());
     }
   }
+  
   public static String getRsaKey(String login){
-    String sql = "SELECT * FROM public_keys WHERE login = ?";
+    String sql = "SELECT * FROM friends WHERE login = ?";
     String rsaKey = null;
      try (Connection conn = connect();
          PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -53,7 +55,7 @@ public class SqlHandlerRsa {
      return rsaKey;
 }
 public static boolean insertKey(String login, String rsaPublicKey) {
-    String sql = "INSERT OR IGNORE INTO public_keys (login, rsa_public_key) VALUES (?, ?)";
+    String sql = "INSERT OR IGNORE INTO friends (login, rsa_public_key) VALUES (?, ?)";
 
     try (Connection conn = connect();
          PreparedStatement pstmt = conn.prepareStatement(sql)) {

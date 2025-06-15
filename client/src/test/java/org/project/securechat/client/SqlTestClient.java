@@ -13,15 +13,18 @@ public class SqlTestClient
   @Test
   void serverOn(){
     //erver.main(null);
-   SqlHandlerConversations.createConversationsTable();
+    SqlHandlerConversations.createConversationsTable();
     SqlHandlerRsa.createRsaTable();
     
   }
   @Test
   void check_database(){
    SQLiteTableViewer.main(null);
- //  SQLiteTableViewer.dropTable("conversations");
- //  SQLiteTableViewer.dropTable("rsa_public_keys");
+  }
+  // @Test
+  void delete_database(){
+     SQLiteTableViewer.dropTable("conversations");
+     SQLiteTableViewer.dropTable("rsa_friends");
   }
   @Test 
   void check_sorting(){

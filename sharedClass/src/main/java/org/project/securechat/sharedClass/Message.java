@@ -51,12 +51,15 @@ public class Message {
  
   public enum DataType {
     TEXT,
-    FILE,
+    FILE, //for now not used
     KEY_EXCHANGE,
-    GET_RSA_KEY,
-    GET_AES_KEY,
+    RSA_KEY,
+    AES_KEY,
     AES_EXCHANGE,
-    CONFIRMATION,
+    CONFIRMATION, //any kind of confirmation
+    ABORT, //any kind of not confirmation
+    CREATECHAT,
+    CREATEGROUPCHAT,
     CLOSE_CONNECTION;
   }
 
