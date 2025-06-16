@@ -8,8 +8,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
-import org.project.securechat.sharedClass.*;
-import org.project.securechat.sharedClass.Message.DataType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.project.securechat.server.sql.SqlHandlerPasswords;
@@ -210,20 +208,17 @@ public class Login implements Runnable {
     // Zakładam, że ClientHandler ma konstruktor(Socket, String login,
     // BlockingQueue, DataOutputStream)
     if(firstTime == true || SqlHandlerPasswords.getPublicKey(login)== null){
-      out.writeUTF("Welcome");
-      out.flush();
-      
-      Message mess = new Message(null,null,DataType.KEY_EXCHANGE,login);
+
       LOGGER.info("WYSYLAM WIADOMOSC Z PROSBA O KLUCZ");
-      out.writeUTF(JsonConverter.parseObjectToJson(mess));
+      out.writeUTF("RSA_EXCHANGE");
       out.flush();
       Thread.sleep(200);
       String key = in.readUTF();
       LOGGER.info("ODEBRALEM WIADOMOSC {}",key);
-      mess = JsonConverter.parseDataToObject(key, Message.class);
-      
-      if(mess.getDataType().equals(DataType.KEY_EXCHANGE)){
-        if(SqlHandlerPasswords.updateKey(login,mess.getData())){
+
+      if(key.startsWith("RSA_EXCHANGE")){
+        String rsakey = key.split(";")[1];
+        if(SqlHandlerPasswords.updateKey(login,rsakey)){
           LOGGER.info("KLUCZ DODANY");
         }else{
           LOGGER.info("KLUCZ NIEDODANY ERROR ALBO UZYTKOWNIK NIE ISTNIEJE ALBO KLUCZ JUZ JEST");
@@ -231,13 +226,9 @@ public class Login implements Runnable {
       }
      
     }
-    else{
-      out.writeUTF("Welcome");
-       out.flush();
-      Message mess = new Message(null,null,DataType.CONFIRMATION,login);
-    out.writeUTF(JsonConverter.parseObjectToJson(mess));
-     out.flush();
-    }
+    out.writeUTF("Welcome;"+login+";"+SqlHandlerPasswords.getUserId(login));
+    out.flush();
+    
     
     // start receiver here
     receiver = new ServerReceiver(in, preClientInputQueue,executor);

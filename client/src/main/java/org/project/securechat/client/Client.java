@@ -33,6 +33,7 @@ public class Client {
   private DataInputStream in;
   private BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in,StandardCharsets.UTF_8));
   static public String login;
+  static public long userId;
   public Client(){
     SqlHandlerConversations.createConversationsTable();
     SqlHandlerRsa.createRsaTable();

@@ -35,26 +35,7 @@ public class ClientReceiver implements Runnable {
     this.executor = executor;
     initCommandHandlers();
   }
-  private void exchangeRsaKey(){
-    LOGGER.info("WYSYLANIE KLUCZA");
-    
-    PublicKey keyForExchange = EncryptionService.readPublicKeyFromFile();
-    if(keyForExchange == null){
-      KeyPair keyPair = EncryptionService.generatePairOfRsaKeys();
-      EncryptionService.saveRsaKeysToFile(keyPair);
-      keyForExchange = EncryptionService.readPublicKeyFromFile();
-    
-    }
-    LOGGER.info("KLUCZ ODCZYTANY | STWORZONY");
-    Message messageKeyExchange = new Message(Client.login,null,DataType.KEY_EXCHANGE,EncryptionService.getString64FromBytes(keyForExchange.getEncoded()));
-    try{
-        clientOutputQueue.put(JsonConverter.parseObjectToJson(messageKeyExchange));
-        LOGGER.info("KLUCZ WYSLANY");
-      }catch(InterruptedException |IOException e){
-      LOGGER.error("BLAD WYMIANY KLUCZY",e);
-    }
-    }
-  
+
   @Override
   public void run() {
     String message=null;
@@ -65,19 +46,24 @@ public class ClientReceiver implements Runnable {
       while (!Thread.currentThread().isInterrupted()) {
         message = in.readUTF();
         System.out.println(message);
-        if (message.startsWith("Welcome")) {
-          
-         
-          message = in.readUTF();
-          Message mess = JsonConverter.parseDataToObject(message, Message.class);
-          LOGGER.info("JESTEM W PIERWSZEJ PETLI {}",message);
-          if(mess.getDataType().equals(DataType.CONFIRMATION)){
-            Client.login = mess.getData();
-          }else if(mess.getDataType().equals(DataType.KEY_EXCHANGE)){
-              Client.login = mess.getData();
-               exchangeRsaKey();
+        if(message.equals("RSA_EXCHANGE")){
+          LOGGER.debug("WYSYLANIE KLUCZA");
+          PublicKey keyForExchange = EncryptionService.readPublicKeyFromFile();
+          if(keyForExchange == null){
+            KeyPair keyPair = EncryptionService.generatePairOfRsaKeys();
+            EncryptionService.saveRsaKeysToFile(keyPair);
+            keyForExchange = EncryptionService.readPublicKeyFromFile();
           }
-           Client.status.put("OK");
+          clientOutputQueue.put("RSA_EXCHANGE;"+EncryptionService.getString64FromBytes(keyForExchange.getEncoded()));
+          message=in.readUTF();
+        }
+        if (message.startsWith("Welcome")) {
+          String[] pack = message.split(";");
+          Client.login = pack[1];
+          Client.userId = Long.parseLong(pack[2]);
+          LOGGER.info("Client login: {}", Client.login);
+         
+          Client.status.put("OK");
           LOGGER.info("status OK");  
           
           break;
