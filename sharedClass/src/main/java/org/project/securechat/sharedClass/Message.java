@@ -8,7 +8,7 @@ import lombok.Setter;
 public class Message {
   public Message() {
   }
-
+  
   public Message(String senderID, String chatID, DataType dataType, String data) {
     this.senderID = senderID;
     this.chatID = chatID;
@@ -28,6 +28,15 @@ public class Message {
     
     this.data = data;
   
+  }
+  public Message(long userId,long chatId,DataType dataType,String data){
+    this.senderID = String.valueOf(userId);
+    this.chatID = String.valueOf(chatId);
+  
+    this.dataType = dataType;
+    this.timestamp = Instant.now();
+    
+    this.data = data;
   }
 
   private String senderID;
@@ -54,12 +63,10 @@ public class Message {
     FILE, //for now not used
     KEY_EXCHANGE,
     RSA_KEY,
-    AES_KEY,
-    AES_EXCHANGE,
     CONFIRMATION, //any kind of confirmation
     ABORT, //any kind of not confirmation
-    CREATECHAT,
-    CREATEGROUPCHAT,
+    CREATE_2_CHAT, //create 2 person chat chat
+    CREATE_G_CHAT, //create multiple person chat
     CLOSE_CONNECTION;
   }
 

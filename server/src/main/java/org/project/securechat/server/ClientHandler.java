@@ -37,6 +37,7 @@ public class ClientHandler implements Runnable{
         this.out=out;
         this.executor = executor;
         initCommandHandlers();
+        // TODO przeniesc do run
         List<Message> olderMessages = SqlHandlerMessages.getOlderMessages(userID,LocalDateTime.now());
         for(Message m:olderMessages){
           try{
@@ -45,7 +46,7 @@ public class ClientHandler implements Runnable{
           }catch(IOException e){
             // LOGGER.error("error in sending old message to {}",userID);
           }
-      }
+        }
       
     }
     private void initCommandHandlers(){
@@ -63,10 +64,22 @@ public class ClientHandler implements Runnable{
         return null;
       });
       commandHandler.put(DataType.RSA_KEY,msg->{
-        String rsaKey = SqlHandlerPasswords.getPublicKey(msg.getChatID());
-        LOGGER.info((rsaKey == null) ? "BRAK KLUCZA W BAZIE" : "KLUCZ W BAZIE WYSYLAM");
+        String username=msg.getData();
+        LOGGER.debug("i get question about public_rsa of user: {}:",username);
+        long user_id;
+        String fragment = username.split(":")[1];
+        LOGGER.trace("checking rsa for: {}",fragment);
+        if(username.startsWith("USERNAME:"))
+          user_id=SqlHandlerPasswords.getUserId(fragment);
+        else
+          user_id=Long.parseLong(fragment);
+        username=SqlHandlerPasswords.getUsernameFromUserId(user_id);
+        // user_id=SqlHandlerPasswords.getUserId(username);
+        String rsaKey = SqlHandlerPasswords.getPublicKey(user_id);
+        LOGGER.debug((rsaKey == null) ? "BRAK KLUCZA W BAZIE" : "KLUCZ W BAZIE WYSYLAM");
         try{
-          out.writeUTF(JsonConverter.parseObjectToJson(new Message(msg.getSenderID(),msg.getChatID(),DataType.RSA_KEY,rsaKey)));
+          Message tosend=new Message(user_id,0,DataType.RSA_KEY,username+';'+rsaKey);
+          out.writeUTF(JsonConverter.parseObjectToJson(tosend));
           out.flush();
         }catch(IOException e){
           LOGGER.error(e);
@@ -77,35 +90,55 @@ public class ClientHandler implements Runnable{
         executor.submit(() -> new SqlExecutor(msg));
         return null;
       });
-      commandHandler.put(DataType.AES_EXCHANGE,msg->{
-        try{
-          AesPair aesPair = JsonConverter.parseDataToObject(msg.getData(), AesPair.class);
-  
-          long user1=SqlHandlerPasswords.getUserId(msg.getSenderID());
-          long user2=SqlHandlerPasswords.getUserId(msg.getChatID());
-          if(user1==-1 || user2==-1) //nie ma user
-            return null;
-  
-          try{
-            if(user1>user2)
-              SqlHandlerConversations.insertOneToOneChat(user2, user1, aesPair.getAesReceiver(), aesPair.getAesSender());
-            else
-              SqlHandlerConversations.insertOneToOneChat(user1, user2, aesPair.getAesSender(), aesPair.getAesReceiver());
-          }catch(SQLException e){
-            LOGGER.error("creating new chat1-1 {}",e.getMessage());
+      commandHandler.put(DataType.CREATE_2_CHAT,msg->{
+          LOGGER.debug("cerating new chat");
+          long creatorID = Long.parseLong(msg.getSenderID());
+          String[] data = msg.getData().split(";");
+          long user1Id = Long.parseLong(data[0]);
+          String aes1 = data[1];
+          long user2Id = Long.parseLong(data[2]);
+          String aes2 = data[3];
+          try {
+              long chatId = SqlHandlerConversations.insertOneToOneChat(user1Id, user2Id, aes1, aes2);
+              LOGGER.debug("sending messages about  creating chat to members:");
+              Message confirmationMessage = new Message(user2Id, chatId, DataType.CREATE_2_CHAT, aes1);
+              out.writeUTF(JsonConverter.parseObjectToJson(confirmationMessage));
+              out.flush();
+              confirmationMessage = new Message(user1Id, chatId, DataType.CREATE_2_CHAT, aes2);
+              SqlHandlerConversations.insertOneToOneChat(user1Id, user2Id, aes1, aes2);
+              String name=SqlHandlerPasswords.getUsernameFromUserId(user2Id);
+              ClientHandler user2Handler=Server.getSocket(name);
+              user2Handler.sendMessage(JsonConverter.parseObjectToJson(confirmationMessage));
+              
+          } catch (SQLException e) {
+              LOGGER.error("Error creating one-to-one chat: {}", e.getMessage());
+          } catch (IOException e) {
+              LOGGER.error("Error sending confirmation message: {}", e.getMessage());
           }
-          // SqlHandlerConversations.insertConversation(mess.getSenderID(), mess.getChatID(), aesPair.getAesSender(),aesPair.getAesReceiver());
-          // Map<String,String> conversation = SqlHandlerConversations.getConversation(mess.getSenderID(),mess.getChatID());
-  
-          //aesPair = new AesPair(conversation.get("aes_key_for_user1"),conversation.get("aes_key_for_user2"),conversation.get("user1"),conversation.get("user2"));
-          Message messToSend = new Message(aesPair.getSender(),aesPair.getReceiver(),DataType.AES_EXCHANGE,JsonConverter.parseObjectToJson(aesPair));
-          out.writeUTF(JsonConverter.parseObjectToJson(messToSend));
-          out.flush();
-        }catch(IOException e){
-          LOGGER.error(e);
-        }
+
+          return null;
+
+          // long chatId=SqlHandlerConversations.insertOneToOneChat(creatorID, secondUserId, aesKey, aesKey);
+          // SqlHandlerMessages.insertMessage(creatorID, secondUserId, DataType.CREATE_2_CHAT, aesKey);
+          
+        });
+      commandHandler.put(DataType.TEXT,msg->{
+      try {
+          long chatId = Long.parseLong(msg.getChatID());
+          long senderId = Long.parseLong(msg.getSenderID());
+          String user;
+          List<Long> usersInChat = SqlHandlerConversations.getUsersFromChat(chatId, senderId);
+          for (Long userId : usersInChat) {
+              user=SqlHandlerPasswords.getUsernameFromUserId(userId);
+              Message mess=new Message(userId,Long.parseLong(msg.getChatID()),DataType.TEXT,msg.getData());
+              Server.getSocket(user).sendMessage(JsonConverter.parseObjectToJson(mess));   
+          }
+      } catch (Exception e) {
+          LOGGER.error("Invalid chat ID or sender ID format: {}", e.getMessage());
+      }
+
         return null;
-      });
+      });    
     }
     public String getLogin(){
       return userID;

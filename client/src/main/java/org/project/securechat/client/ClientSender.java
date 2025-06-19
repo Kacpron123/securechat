@@ -22,7 +22,16 @@ public class ClientSender implements Runnable {
     this.clientOutputQueue = outputQueue;
     this.executor = executor;
   }
-
+  
+  public void send(String message) {
+    try {
+      clientOutputQueue.put(message);
+    } catch (InterruptedException e) {
+      LOGGER.error(e);
+      executor.shutdownNow();
+    }
+  }
+  
   @Override
   public void run() {
     LOGGER.info("ClientSender working");

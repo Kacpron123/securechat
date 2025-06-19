@@ -15,23 +15,22 @@ public class SqlTest
   void serverOn(){
     //erver.main(null);
     SqlHandlerPasswords.createUsersTable();
-    SqlHandlerConversations.createConversationsTable();
+    // SqlHandlerConversations.createConversationsTable();
     SqlHandlerMessages.createMessagesTable();
     SqlHandlerConversations.createChatRelated();
-    //SqlHandlerPasswords.dropTable("users");
   }
   @Test
   void print_Tables(){
     SQLiteTableViewer.main(null);
   }
-  // @Test
+  @Test
   void delete_database(){
     // SqlHandlerPasswords.dropTable("users");
     // SqlHandlerPasswords.dropTable("conversations");
     // SqlHandlerPasswords.dropTable("messages");
-    SqlHandlerPasswords.dropTable("chats");
-    SqlHandlerPasswords.dropTable("chat_participant");
-    SQLiteTableViewer.main(null);
+    // SqlHandlerPasswords.dropTable("chats");
+    // SqlHandlerPasswords.dropTable("chat_participant");
+    // SQLiteTableViewer.main(null);
   }
   @Test
   void check_database(){
@@ -55,13 +54,5 @@ public class SqlTest
   void get_usr_password(){
     System.out.println(SqlHandlerPasswords.getUserPassword("admin"));
   }
-  @Test
-  void tmp(){
-    SqlHandlerConversations.createConversationsTable();
-  }
-  // @Test
-  // void addMessage(){
-  //   SqlHandlerMessages.insertMessage("Pawel", "Krzysztof", "haloooo", "2025-05-26T08:45:48.641588900Z");
-  // }
 
 }

@@ -12,7 +12,7 @@
   </Appenders>
 
   <Loggers>
-    <Logger name="com.mycompany" level="ERROR"/>
+    <Logger name="com.mycompany" level="TRACE"/>
     <Root level="INFO">
       <AppenderRef ref="CONSOLE"/>
     </Root>

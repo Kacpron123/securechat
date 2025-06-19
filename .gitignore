@@ -6,3 +6,4 @@ key.priv
 *.db
 .vscode
 .gitignore
+*.sh
