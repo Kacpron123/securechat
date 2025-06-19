@@ -14,17 +14,20 @@ public class SqlTestClient
   void serverOn(){
     //erver.main(null);
     SqlHandlerConversations.createConversationsTable();
+    SqlHandlerConversations.createChatRelated();
     SqlHandlerRsa.createRsaTable();
     
   }
   @Test
-  void check_database(){
+  void print_Tables(){
    SQLiteTableViewer.main(null);
   }
-  // @Test
+  @Test
   void delete_database(){
-     SQLiteTableViewer.dropTable("conversations");
-     SQLiteTableViewer.dropTable("rsa_friends");
+    //  SQLiteTableViewer.dropTable("conversations");
+    //  SQLiteTableViewer.dropTable("friends");
+    //  SQLiteTableViewer.dropTable("chats");
+    //  SQLiteTableViewer.dropTable("chat_member");
   }
   @Test 
   void check_sorting(){

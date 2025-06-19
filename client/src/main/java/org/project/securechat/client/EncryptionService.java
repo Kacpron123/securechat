@@ -4,19 +4,30 @@ import org.project.securechat.client.implementations.AesImp;
 import org.project.securechat.client.implementations.RsaImp;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 
 import javax.crypto.SecretKey;
 import javax.crypto.BadPaddingException;
 
 import java.security.PrivateKey;
 public class EncryptionService {
-  
   private static Rsa rsa = new RsaImp();
   private static Aes aes = new AesImp();
+  // idea:
+  private static PublicKey public_key;
+  private static PrivateKey private_key;
+  static{
+    public_key=rsa.readPubKeyFromFile();
+    if(public_key==null)
+      rsa.generatePairOfKeys();
+    public_key=rsa.readPubKeyFromFile();
+    private_key=rsa.readPrivKeyFromFile();
+  }
 
   public static KeyPair generatePairOfRsaKeys(){
     return rsa.generatePairOfKeys();
@@ -30,7 +41,6 @@ public class EncryptionService {
   public static PrivateKey readPrivateKeyFromFile(){
     return rsa.readPrivKeyFromFile();
   }
-  
   /**
    * 
    * @param pubKey public rsa key

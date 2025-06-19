@@ -79,6 +79,23 @@ public class SqlHandlerPasswords {
       return false;
     }
   }
+  
+  public static String getUsernameFromUserId(long userId) {
+    String sql = "SELECT username FROM users WHERE user_id = ?";
+    try (Connection conn = connect();
+        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+      pstmt.setLong(1, userId);
+      ResultSet rs = pstmt.executeQuery();
+
+      if (rs.next()) {
+        return rs.getString("username");
+      }
+    } catch (SQLException e) {
+      System.err.println("Błąd podczas pobierania nazwy użytkownika o ID=" + userId + ": " + e.getMessage());
+    }
+    return null;
+  }
   public static boolean updateKey(String username, String rsaKey) {
     String selectSql = "SELECT rsa_public_key FROM users WHERE username = ?";
     String updateSql = "UPDATE users SET rsa_public_key = ? WHERE username = ?";
@@ -113,13 +130,13 @@ public class SqlHandlerPasswords {
         return false;
     }
   }
-  public static String getPublicKey(String username) {
-    String sql = "SELECT rsa_public_key FROM users WHERE username = ?";
+  public static String getPublicKey(long userId) {
+    String sql = "SELECT rsa_public_key FROM users WHERE user_id = ?";
 
     try (Connection conn = connect();
          PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-        pstmt.setString(1, username);
+        pstmt.setLong(1, userId);
         ResultSet rs = pstmt.executeQuery();
 
         if (rs.next()) {

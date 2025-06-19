@@ -36,8 +36,8 @@ public class Server {
     }
   }
   boolean userExists(String login){
-    String user = SqlHandlerPasswords.getPublicKey(login);
-    if(user !=null){
+    Long user = SqlHandlerPasswords.getUserId(login);
+    if(user !=-1){
       return true;
     }else{
       return false;

@@ -69,10 +69,10 @@ public class SqlHandlerConversations {
       ");";
     String sqlfriend = "CREATE TABLE IF NOT EXISTS chat_member (" +
       "chat_id INTEGER NOT NULL," +
-      "user_id INTEGER NOT NULL" +
+      "user_id INTEGER NOT NULL, " +
       "PRIMARY KEY  (chat_id, user_id), "+
       "FOREIGN KEY (chat_id) REFERENCES chats(chat_id) ON DELETE CASCADE, "+
-      "FOREIGN KEY (user_id) REFERENCES friends(user_id) ON DELETE CASCADE, "+
+      "FOREIGN KEY (user_id) REFERENCES friends(user_id) ON DELETE CASCADE"+
       ");";
 
     try (Connection conn = connect();
@@ -114,6 +114,64 @@ public static Map<String, String> getConversation(String user1,String user2) {
     }
 
     return result.isEmpty() ? null : result;
-}
+  }
+  // static public boolean chat_G_Exist(long id){
+  //   String sql = "SELECT * FROM conversations WHERE chat_id = ?";
+  //   try (Connection conn = connect();
+  //        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+  //       pstmt.setLong(1, id);
+  //       try (ResultSet rs = pstmt.executeQuery()) {
+  //           return rs.next();
+  //       }
+
+  //   } catch (SQLException e) {
+  //       e.printStackTrace();
+  //       return false;
+  //   }
+  // }
+  static public long chat_2_Exist(String username){
+    String sql = "SELECT chat_id FROM chats WHERE chat_name = ?";
+    try (Connection conn = connect();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+        pstmt.setString(1, username);
+        try (ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getLong("chat_id");
+            }
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return 0;
+  }
+  static public void Create_2_chat(long chat_id,long myId,long userId,String aes_key){
+    String sql = "INSERT INTO chats (chat_id, chat_name, AES_KEY) VALUES (?, ?, ?)";
+    String username = SqlHandlerRsa.getLogin(userId);
+    try (Connection conn = connect();
+
+        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        pstmt.setLong(1, chat_id);
+        pstmt.setString(2, username);
+        pstmt.setString(3, aes_key);
+        pstmt.executeUpdate();
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    String sqlMember = "INSERT INTO chat_member (chat_id, user_id) VALUES (?, ?)";
+    try (Connection conn = connect();
+         PreparedStatement pstmt = conn.prepareStatement(sqlMember)) {
+
+        pstmt.setLong(1, chat_id);
+        pstmt.setLong(2, userId);
+        pstmt.executeUpdate();
+
+    } catch (SQLException e){
+        e.printStackTrace();
+    }
+  }
 
 }

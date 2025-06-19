@@ -12,8 +12,8 @@
   </Appenders>
 
   <Loggers>
-    <Logger name="com.mycompany" level="DEBUG"/>
-    <Root level="DEBUG">
+    <Logger name="com.mycompany" level="TRACE"/>
+    <Root level="TRACE">
       <AppenderRef ref="CONSOLE"/>
     </Root>
   </Loggers>

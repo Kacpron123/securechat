@@ -207,7 +207,8 @@ public class Login implements Runnable {
   private void startMainClientHandler(String login) throws IOException,InterruptedException {
     // Zakładam, że ClientHandler ma konstruktor(Socket, String login,
     // BlockingQueue, DataOutputStream)
-    if(firstTime == true || SqlHandlerPasswords.getPublicKey(login)== null){
+    long user_id=SqlHandlerPasswords.getUserId(login);
+    if(firstTime == true || SqlHandlerPasswords.getPublicKey(user_id)== null){
 
       LOGGER.info("WYSYLAM WIADOMOSC Z PROSBA O KLUCZ");
       out.writeUTF("RSA_EXCHANGE");

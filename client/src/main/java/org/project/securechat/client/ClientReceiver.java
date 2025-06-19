@@ -11,6 +11,8 @@ import java.util.function.Consumer;
 import java.lang.Runnable;
 import java.security.PublicKey;
 import java.security.KeyPair;
+import java.security.PrivateKey;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.project.securechat.sharedClass.*;
@@ -21,13 +23,13 @@ import org.project.securechat.client.sql.SqlHandlerRsa;
 public class ClientReceiver implements Runnable {
   private static final Logger LOGGER = LogManager.getLogger();
   private DataInputStream in;
-  private BlockingQueue<String> serverInputQueue;
+  private BlockingQueue<Message> serverInputQueue;
   private BlockingQueue<String> clientOutputQueue;
   private ExecutorService executor;
 
   private HashMap<String, BlockingDeque<Message>> chatQueues = new HashMap<>();
   private final Map<DataType, Consumer<Message>> commandHandlers = new HashMap<>();
-  public ClientReceiver(DataInputStream in, BlockingQueue<String> inputQueue, BlockingQueue<String> clientOutputQueue,
+  public ClientReceiver(DataInputStream in, BlockingQueue<Message> inputQueue, BlockingQueue<String> clientOutputQueue,
      ExecutorService executor) {
     this.in = in;
     this.serverInputQueue = inputQueue;
@@ -72,17 +74,12 @@ public class ClientReceiver implements Runnable {
       LOGGER.info("WCHODZE DO DRUGIEJ PETLI");
       while (!Thread.currentThread().isInterrupted()) {
         message = in.readUTF();
-        processMessage(message);
-        System.out.println(message);
-
-        // serverInputQueue.put(message);
-        // Message mess = JsonConverter.parseDataToObject(message, Message.class);
-        // if(chatQueues.containsKey(mess.getChatID())){
-        // chatQueues.get(mess.getChatID()).put(mess);
-        // }else{
-        // chatQueues.put(mess.getChatID(),new LinkedBlockingDeque<Message>(10));
-        // }
-
+        LOGGER.trace("i get message: {}",message);
+        Message mess = JsonConverter.parseDataToObject(message, Message.class);
+        if(commandHandlers.containsKey(mess.getDataType()))
+          commandHandlers.get(mess.getDataType()).accept(mess);
+        else
+          serverInputQueue.put(mess);
       }
     } catch (IOException | InterruptedException e) {
       LOGGER.error("DRUGA PETLA {}",message, e);
@@ -96,47 +93,26 @@ public class ClientReceiver implements Runnable {
       Thread.currentThread().interrupt();
     }
   }
-  private void processMessage(String message)throws IOException {
-        //System.out.println("DEBUG (ClientListener): JVM Default File Encoding: " + System.getProperty("file.encoding"));
-    LOGGER.info("RAW MESSAGE "+message);
-    
-    
-    Message mess = JsonConverter.parseDataToObject(message, Message.class);
-    //String[] pack= encryptMessageRetWithKey(message);
-    
-    
-    if (commandHandlers.containsKey(mess.getDataType())) {
-      commandHandlers.get(mess.getDataType()).accept(mess);
-    }
-    
-  }
-
   private void initCommandHandlers() {
     commandHandlers.put(DataType.RSA_KEY, msg -> {
-      LOGGER.info("ODEBRALEM KLUCZ OD SERWERA DLA {}",msg.getChatID());
-      String rsaKey = msg.getData();
-      String forWho = msg.getChatID();
-      if(rsaKey !=null){
-         SqlHandlerRsa.insertKey(forWho, rsaKey);
-      LOGGER.info("dodano klucz rsa dla {}",forWho);
+      String[] data = msg.getData().split(";");
+      long user_id = Long.parseLong(msg.getSenderID());
+      String username = data[0];
+      String rsaKey = data[1];
+      LOGGER.debug("I get information of rsa Key from user{},id:{}", username,user_id);
+      if(SqlHandlerRsa.checkIfUserIdExists(user_id)){
+        LOGGER.debug("public rsa of user already known");
+        return;
+      }
+      if(user_id > 0){
+        LOGGER.info("ODEBRALEM KLUCZ OD SERWERA DLA {}",username);
+        SqlHandlerRsa.insertFriend(user_id,username, rsaKey);
+      LOGGER.info("dodano klucz rsa dla {}",username);
       }else{
-        LOGGER.info("PODANY UZYTKOWNIK NIE ISTNIEJE");
+        LOGGER.info("PODANY UZYTKOWNIK NIE ISTNIEJE NA SERWERZE");
       }
       
       
     });
-    commandHandlers.put(DataType.AES_EXCHANGE,msg ->{
-      LOGGER.info("ODEBRALEM KLUCZE AES {}",msg.getData());
-      try{
-        
-        AesPair aesPair = JsonConverter.parseDataToObject(msg.getData(), AesPair.class);
-        SqlHandlerConversations.insertConversation(msg.getSenderID(), msg.getChatID(), aesPair.getAesSender(), aesPair.getAesReceiver());
-        
-      }catch(IOException e){
-        LOGGER.error("BLAD ZAMIANY NA AES PAIR ");
-      }
-     
-    });
-  
     }
 }
