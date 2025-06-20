@@ -90,20 +90,16 @@ public class ClientListener implements Runnable {
       try{
         LOGGER.debug("creating_aes_key");
         SecretKey aesKey = EncryptionService.createAesKey();
-        // TODO HERE
-
+        
         String rsaKeyHeader = SqlHandlerRsa.getRsaKey(userId);
         PublicKey userRSA = EncryptionService.getPublicKeyFromBytes(EncryptionService.getBytesFromString64((rsaKeyHeader)));
             
         String aesMy = EncryptionService.encodeWithRsa(pubKey, aesKey.getEncoded());
         String aesUser = EncryptionService.encodeWithRsa(userRSA,aesKey.getEncoded());
-        // PublicKey userkey = EncryptionService.getPublicKeyFromBytes(EncryptionService.getBytesFromString64(SqlHandlerRsa.getRsaKey(headerId)));
-        // String encodedAesKeyUser = 
-        //         // String encodedAesKeyEncodedWithRsa = EncryptionService.encodeWithRsaNEW(SqlHandlerRsa.getRsaKey(userId), encodedAesKey.getBytes(StandardCharsets.UTF_8));
-        String data = ""+Client.userId+";"+aesMy+";"+
+        String data = ""+Client.myID+";"+aesMy+";"+
           userId+";"+aesUser;
         LOGGER.debug("sending command cerate chat");
-        tosend=new Message(Client.userId,0,DataType.CREATE_2_CHAT,data);
+        tosend=new Message(Client.myID,0,DataType.CREATE_2_CHAT,data);
         clientOutputQueue.put(JsonConverter.parseObjectToJson(tosend));
         Thread.sleep(200);
       }catch(Exception e){
@@ -151,7 +147,7 @@ public class ClientListener implements Runnable {
         return;
       }
       LOGGER.info("sending mess to {}",headerId);
-      mess= new Message(Client.userId, headerId, DataType.TEXT, EncryptionService.encryptWithAesKey(currentAesKey,message));
+      mess= new Message(Client.myID, headerId, DataType.TEXT, EncryptionService.encryptWithAesKey(currentAesKey,message));
       try {
           clientOutputQueue.put(JsonConverter.parseObjectToJson(mess));
       } catch (InterruptedException | IOException e) {
@@ -221,7 +217,7 @@ public class ClientListener implements Runnable {
   private String getRsaKeyFromServer(String username){
     String rsaKeyHeader = null;
     LOGGER.info("BRAK KLUCZA W BAZIE");
-    Message message = new Message(Client.userId,0,DataType.RSA_KEY,username);
+    Message message = new Message(Client.myID,0,DataType.RSA_KEY,username);
     LOGGER.info("WYSYLAM ZAPYTANIE O KLUCZ");
     try{
       clientOutputQueue.put(JsonConverter.parseObjectToJson(message));

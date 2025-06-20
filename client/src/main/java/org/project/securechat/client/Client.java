@@ -41,11 +41,13 @@ public class Client {
   private DataInputStream in;
   private BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in,StandardCharsets.UTF_8));
   static public String login;
-  static public long userId;
+  static public long myID;
   public Client(){
+    // SQLs:
     SqlHandlerConversations.createChatRelated();
     SqlHandlerRsa.createRsaTable();
     initCommandHandlers();
+    
   }
   
   public void start() {
@@ -143,7 +145,7 @@ public class Client {
       try {
         if(!SqlHandlerRsa.checkIfUserIdExists(Long.parseLong(msg.getSenderID()))){
           LOGGER.debug("don't have rsa, asking server");
-          Message tosend = new Message(userId, 0, DataType.RSA_KEY, "ID:" + msg.getSenderID());
+          Message tosend = new Message(myID, 0, DataType.RSA_KEY, "ID:" + msg.getSenderID());
           out.writeUTF(JsonConverter.parseObjectToJson(tosend));
           Thread.sleep(200);
         }
@@ -154,7 +156,7 @@ public class Client {
         PrivateKey privkey=EncryptionService.readPrivateKeyFromFile();
         String aes=EncryptionService.getString64FromBytes(EncryptionService.decodeWithRsa(privkey,msg.getData()));
         LOGGER.info("creting chat: {} with aes: {}",chatid,aes);
-        SqlHandlerConversations.Create_2_chat(chatid, Client.userId, senderId, aes);
+        SqlHandlerConversations.Create_2_chat(chatid, Client.myID, senderId, aes);
       } catch (Exception e) {
         LOGGER.error("An error occurred: {}", e.getMessage(), e);
       }

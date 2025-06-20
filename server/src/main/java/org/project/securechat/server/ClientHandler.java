@@ -26,16 +26,16 @@ public class ClientHandler implements Runnable{
     public Socket socket;
     private ExecutorService executor ;
     DataOutputStream out;
-    public String userID;
+    public long userID;
     private final Map<Message.DataType,Function<Message,Message>> commandHandler= new HashMap<>();
     BlockingQueue<String> clientInputQueue;
 
-    public ClientHandler(Socket socket,String userID, BlockingQueue<String> preClientInputQueue, DataOutputStream out,ExecutorService executor){
+    public ClientHandler(Socket socket,Long userID, BlockingQueue<String> preClientInputQueue, DataOutputStream out,ExecutorService executor){
         this.socket = socket;
-        this.userID= userID;
         this.clientInputQueue=preClientInputQueue;
         this.out=out;
         this.executor = executor;
+        this.userID=userID;
         initCommandHandlers();
         // TODO przeniesc do run
         List<Message> olderMessages = SqlHandlerMessages.getOlderMessages(userID,LocalDateTime.now());
@@ -69,12 +69,13 @@ public class ClientHandler implements Runnable{
         long user_id;
         String fragment = username.split(":")[1];
         LOGGER.trace("checking rsa for: {}",fragment);
+        // TODO clean RSA_KEY
         if(username.startsWith("USERNAME:"))
           user_id=SqlHandlerPasswords.getUserId(fragment);
         else
           user_id=Long.parseLong(fragment);
         username=SqlHandlerPasswords.getUsernameFromUserId(user_id);
-        // user_id=SqlHandlerPasswords.getUserId(username);
+
         String rsaKey = SqlHandlerPasswords.getPublicKey(user_id);
         LOGGER.debug((rsaKey == null) ? "BRAK KLUCZA W BAZIE" : "KLUCZ W BAZIE WYSYLAM");
         try{
@@ -86,10 +87,10 @@ public class ClientHandler implements Runnable{
         }
          return null;
       });
-      commandHandler.put(DataType.TEXT,msg->{
-        executor.submit(() -> new SqlExecutor(msg));
-        return null;
-      });
+      // commandHandler.put(DataType.TEXT,msg->{
+      //   executor.submit(() -> new SqlExecutor(msg));
+      //   return null;
+      // });
       commandHandler.put(DataType.CREATE_2_CHAT,msg->{
           LOGGER.debug("cerating new chat");
           long creatorID = Long.parseLong(msg.getSenderID());
@@ -106,9 +107,7 @@ public class ClientHandler implements Runnable{
               out.flush();
               confirmationMessage = new Message(user1Id, chatId, DataType.CREATE_2_CHAT, aes2);
               SqlHandlerConversations.insertOneToOneChat(user1Id, user2Id, aes1, aes2);
-              String name=SqlHandlerPasswords.getUsernameFromUserId(user2Id);
-              ClientHandler user2Handler=Server.getSocket(name);
-              user2Handler.sendMessage(JsonConverter.parseObjectToJson(confirmationMessage));
+              Server.sendMessage(user2Id,confirmationMessage);
               
           } catch (SQLException e) {
               LOGGER.error("Error creating one-to-one chat: {}", e.getMessage());
@@ -126,12 +125,10 @@ public class ClientHandler implements Runnable{
       try {
           long chatId = Long.parseLong(msg.getChatID());
           long senderId = Long.parseLong(msg.getSenderID());
-          String user;
           List<Long> usersInChat = SqlHandlerConversations.getUsersFromChat(chatId, senderId);
           for (Long userId : usersInChat) {
-              user=SqlHandlerPasswords.getUsernameFromUserId(userId);
               Message mess=new Message(userId,Long.parseLong(msg.getChatID()),DataType.TEXT,msg.getData());
-              Server.getSocket(user).sendMessage(JsonConverter.parseObjectToJson(mess));   
+              Server.sendMessage(senderId, mess);;   
           }
       } catch (Exception e) {
           LOGGER.error("Invalid chat ID or sender ID format: {}", e.getMessage());
@@ -140,10 +137,17 @@ public class ClientHandler implements Runnable{
         return null;
       });    
     }
-    public String getLogin(){
+    public Long getID(){
       return userID;
     }
     
+    public void sendMessage(Message mess){
+      try {
+        clientInputQueue.put(JsonConverter.parseObjectToJson(mess));
+      } catch (InterruptedException | IOException e) {
+        LOGGER.error("Error while sending message", e);
+      }
+    }
     public void sendMessage(String message){
       try{  
          out.writeUTF(message);
@@ -160,7 +164,7 @@ public class ClientHandler implements Runnable{
         
       }
       LOGGER.debug("klienta {} nie ma na serwerze",mess.getChatID());
-     server.removeClient(mess.getChatID());
+    //  server.removeClient(mess.getChatID()); whyy?
     }
      
 

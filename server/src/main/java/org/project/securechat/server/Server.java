@@ -4,17 +4,19 @@ import java.io.IOException;
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.MessageDigest;
 import java.util.HashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.project.securechat.server.sql.*;
+import org.project.securechat.sharedClass.Message;
 
 public class Server {
   private static Server instance = null;
   private static final Logger LOGGER = LogManager.getLogger();
   private static final int PORT = 12345;
-  public static final HashMap<String, ClientHandler> clients = new HashMap<>();
+  public static final HashMap<Long, ClientHandler> clients = new HashMap<>();
 
   private Server() {
     SqlHandlerPasswords.createUsersTable();
@@ -28,27 +30,26 @@ public class Server {
     }
     return instance;
   }
-  boolean userActive(String login){
-    if(clients.get(login) != null){
+  static public boolean userActive(Long id){
+    if(clients.get(id) != null){
       return true;
     }else{
       return false;
     }
   }
-  boolean userExists(String login){
-    Long user = SqlHandlerPasswords.getUserId(login);
-    if(user !=-1){
+  boolean userExists(long id){
+    if(SqlHandlerPasswords.getUsernameFromUserId(id) != null){
       return true;
     }else{
       return false;
     }
   }
   void addClient(ClientHandler client) {
-    clients.put(client.getLogin(), client);
+    clients.put(client.getID(), client);
   }
 
-  void removeClient(String login) {
-    clients.remove(login);
+  void removeClient(Long id){
+    clients.remove(id);
   }
 
   private void start() {
@@ -66,8 +67,8 @@ public class Server {
     }
   }
 
-  static ClientHandler getSocket(String login) {
-    return clients.get(login);
+  static void sendMessage(long id,Message mess){
+    clients.get(id).sendMessage(mess);
   }
 
   public static void main(String[] args) {

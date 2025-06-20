@@ -11,13 +11,11 @@ import java.util.function.Consumer;
 import java.lang.Runnable;
 import java.security.PublicKey;
 import java.security.KeyPair;
-import java.security.PrivateKey;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.project.securechat.sharedClass.*;
 import org.project.securechat.sharedClass.Message.DataType;
-import org.project.securechat.client.sql.SqlHandlerConversations;
 import org.project.securechat.client.sql.SqlHandlerRsa;
 
 public class ClientReceiver implements Runnable {
@@ -62,7 +60,7 @@ public class ClientReceiver implements Runnable {
         if (message.startsWith("Welcome")) {
           String[] pack = message.split(";");
           Client.login = pack[1];
-          Client.userId = Long.parseLong(pack[2]);
+          Client.myID = Long.parseLong(pack[2]);
           LOGGER.info("Client login: {}", Client.login);
          
           Client.status.put("OK");

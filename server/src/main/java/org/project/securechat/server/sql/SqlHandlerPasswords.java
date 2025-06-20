@@ -46,17 +46,17 @@ public class SqlHandlerPasswords {
       System.err.println("Błąd podczas tworzenia tabeli: " + e.getMessage());
     }
   }
-  public static boolean updateLastLoginTime(String username, LocalDateTime lastLoginTime) {
-    String sql = "UPDATE users SET last_login_time = ? WHERE username = ?";
+  public static boolean updateLastLoginTime(Long id, LocalDateTime lastLoginTime) {
+    String sql = "UPDATE users SET last_login_time = ? WHERE user_id = ?";
     try (Connection conn = connect();
       PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, lastLoginTime.toString());
-      pstmt.setString(2, username);
+      pstmt.setLong(2, id);
       
       int rowsAffected = pstmt.executeUpdate();
       return rowsAffected > 0;
     } catch (SQLException e) {
-      System.err.println("Błąd podczas aktualizacji czasu ostatniej logowania dla użytkownika '" + username + "': " + e.getMessage());
+      System.err.println("Błąd podczas aktualizacji czasu ostatniej logowania dla użytkownika '" + id + "': " + e.getMessage());
       return false;
     }
   }
@@ -188,12 +188,12 @@ public class SqlHandlerPasswords {
     }
     return -1;
   }
+
 /**
  * Drops a table from the database if it exists.
  *
  * @param tableName the name of the table to be dropped
  */
-
   public static void dropTable(String tableName) {
     // DROP TABLE statement with IF EXISTS clause to avoid an error if the table does not exist.
     String sql = "DROP TABLE IF EXISTS " + tableName;

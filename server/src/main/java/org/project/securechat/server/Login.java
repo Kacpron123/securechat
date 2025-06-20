@@ -102,7 +102,7 @@ public class Login implements Runnable {
     out.writeUTF("Enter login:");
      out.flush();
     loginAttempt = in.readUTF();
-    if(Server.getSocket(loginAttempt)!=null){
+    if(Server.userActive(SqlHandlerPasswords.getUserId(loginAttempt))){
       LOGGER.error("User {} already logged in", loginAttempt);
       out.writeUTF("User already logged in.");
         out.flush();
@@ -227,7 +227,8 @@ public class Login implements Runnable {
       }
      
     }
-    out.writeUTF("Welcome;"+login+";"+SqlHandlerPasswords.getUserId(login));
+    long userid=SqlHandlerPasswords.getUserId(login);
+    out.writeUTF("Welcome;"+login+";"+userid);
     out.flush();
     
     
@@ -237,13 +238,14 @@ public class Login implements Runnable {
     executor.submit(receiver);
     LOGGER.info("ClientReceiver thread started for client: {}", clientSocket.getInetAddress());
 
-    ClientHandler handler = new ClientHandler(clientSocket, login, preClientInputQueue, out,executor);
+    ClientHandler handler = new ClientHandler(clientSocket, userid, preClientInputQueue, out,executor);
     Server.getInstance().addClient(handler);
     
     executor.submit(handler);
     LOGGER.info("Main ClientHandler started for user: {}", login);
     while(!executor.isTerminated());
     LOGGER.error("watek LOGIN przerwany" );
+    // TODO kill login as soon as logged
     executor.shutdownNow();
     in.close();
     out.close();
