@@ -161,7 +161,6 @@ public class SqlHandlerConversations {
         List<Long> people = new ArrayList<>();
         try (Connection conn = connect();
              PreparedStatement pstmt = conn.prepareStatement(selectPeopleFromChatSql)) {
-              // TODO sortowanie wiadomosci
             pstmt.setLong(1, chatId);
             pstmt.setLong(2, userId);
             try (ResultSet rs = pstmt.executeQuery()) {

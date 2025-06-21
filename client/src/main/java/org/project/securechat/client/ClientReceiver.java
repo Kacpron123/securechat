@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import org.project.securechat.sharedClass.*;
 import org.project.securechat.sharedClass.Message.DataType;
 import org.project.securechat.client.sql.SqlHandlerConversations;
+import org.project.securechat.client.sql.SqlHandlerMessages;
 import org.project.securechat.client.sql.SqlHandlerRsa;
 
 public class ClientReceiver implements Runnable {
@@ -120,9 +121,13 @@ public class ClientReceiver implements Runnable {
     });
     commandHandlers.put(DataType.TEXT,msg ->{
       SecretKey currentAesKey = EncryptionService.getAesKeyFromString(SqlHandlerConversations.getaesKey(msg.getChatID()));
+
       // TODO get chat name
       try {
-        System.out.println(""+msg.getChatID()+": "+EncryptionService.decryptWithAesKey(currentAesKey, msg.getData()));
+        String decoded=EncryptionService.decryptWithAesKey(currentAesKey, msg.getData());
+        System.out.println(""+msg.getChatID()+": "+decoded);
+        msg.setData(decoded);
+        SqlHandlerMessages.insertMessage(msg);
       } catch (BadPaddingException e) {
         LOGGER.error("ERROR DECRYPTING MESSAGE FROM CHAT {}",msg.getChatID(),e);
       }

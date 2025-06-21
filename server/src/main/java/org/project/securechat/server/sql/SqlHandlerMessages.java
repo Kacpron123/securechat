@@ -6,7 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.project.securechat.sharedClass.Message;
@@ -29,8 +28,9 @@ public class SqlHandlerMessages {
     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
     "sender_id INTEGER NOT NULL," +
     "chat_id INTEGER NOT NULL," +
-    "data TEXT NOT NULL," +
-    "timestamp DATETIME NOT NULL"
+    "type VARCHAR(15) NOT NULL, "+ //maybe containing as enum.ordinal() (?)
+    "data TEXT," +
+    "timestamp TEXT NOT NULL"
      +");";
 
 
@@ -42,23 +42,28 @@ public class SqlHandlerMessages {
       System.err.println("Błąd podczas tworzenia tabeli 'messages': " + e.getMessage());
     }
   }
-public static void insertMessage(long senderId, long  chatId,
-                                 String data, 
-                                 String timestamp) {
+  
+/**
+ * Inserts message into database.
+ * 
+ * @param mess Message object to be inserted
+ */
+public static void insertMessage(Message mess) {
     String sql = "INSERT INTO messages (" +
-                 "sender_id,  chat_id, data, " +
+                 "sender_id, chat_id, type, data, " +
                  "timestamp" +
-                 ") VALUES (?, ?, ?, ?)";
+                 ") VALUES (?, ?, ?, ?, ?)";
   
     try (Connection conn = connect();
          PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-        pstmt.setLong(1, senderId);
+        pstmt.setLong(1, mess.getSenderID());
 
-        pstmt.setLong(2, chatId);
-        pstmt.setString(3, data);
+        pstmt.setLong(2, mess.getChatID());
+        pstmt.setString(3, mess.getDataType().toString());
+        pstmt.setString(4, mess.getData());
 
-        pstmt.setString(4, timestamp); // np. Instant.now().toString()
+        pstmt.setString(5, mess.getTimestamp().toString());
 
         pstmt.executeUpdate();
 
@@ -73,19 +78,20 @@ public static void insertMessage(long senderId, long  chatId,
  * @param loginDate Login date of the user
  * @return List of messages sent to user after loginDate
  */
-public static List<Message> getOlderMessages(Long id,LocalDateTime loginDate){
+public static List<Message> getOlderMessages(Long id){
   //chincking server he is in:
   List<Message> messages = new ArrayList<>();
-  String sql = "SELECT m.sender_id, m.chat_id, m.data, m.timestamp " +
+  String sql = "SELECT m.sender_id, m.chat_id,type, m.data, m.timestamp " +
     "FROM messages m " +
     "INNER JOIN chat_participant cp ON m.chat_id = cp.chat_id " +
-    "WHERE cp.user_id = ? AND m.timestamp > ? " +
+    "WHERE cp.user_id = ? " +
+    "AND m.timestamp > (SELECT last_login_time FROM users WHERE user_id = ?)" +
     "ORDER BY m.timestamp ASC";
   try (Connection conn = connect();
     PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
     pstmt.setLong(1, id);
-    pstmt.setString(2, loginDate.toString());
+    pstmt.setLong(2, id);
 
     ResultSet rs = pstmt.executeQuery();
 
@@ -93,9 +99,10 @@ public static List<Message> getOlderMessages(Long id,LocalDateTime loginDate){
         long senderId = rs.getLong("sender_id");
         long chatID = rs.getLong("chat_id");
         String data = rs.getString("data");
+        DataType type=DataType.valueOf(rs.getString("type"));
         String timestamp = rs.getString("timestamp");
 
-        Message msg = new Message(senderId, chatID, DataType.TEXT, data, timestamp);
+        Message msg = new Message(senderId, chatID, type, data, timestamp);
         messages.add(msg);
     }
 

@@ -6,6 +6,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,11 +14,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.lang.Runnable;
-import java.time.LocalDateTime;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.project.securechat.sharedClass.Message.DataType;
+import org.w3c.dom.Text;
 import org.project.securechat.sharedClass.*;
 
 public class ClientHandler implements Runnable{
@@ -36,16 +37,6 @@ public class ClientHandler implements Runnable{
         this.executor = executor;
         this.userID=userID;
         initCommandHandlers();
-        // TODO przeniesc do run
-        List<Message> olderMessages = SqlHandlerMessages.getOlderMessages(userID,LocalDateTime.now());
-        for(Message m:olderMessages){
-          try{
-            String jsonMessage = JsonConverter.parseObjectToJson(m);
-            sendMessage(jsonMessage);
-          }catch(IOException e){
-            // LOGGER.error("error in sending old message to {}",userID);
-          }
-        }
       
     }
     private void initCommandHandlers(){
@@ -68,7 +59,6 @@ public class ClientHandler implements Runnable{
         long user_id;
         String fragment = username.split(":")[1];
         LOGGER.trace("checking rsa for: {}",fragment);
-        // TODO clean RSA_KEY
         if(username.startsWith("USERNAME:"))
           user_id=SqlHandlerPasswords.getUserId(fragment);
         else
@@ -169,6 +159,24 @@ public class ClientHandler implements Runnable{
       try{
         
         LOGGER.info("Starting ClientHandler: {}",userID);
+        // sending old messages
+        List<Message> olderMessages = SqlHandlerMessages.getOlderMessages(userID);
+        for(Message m:olderMessages){
+          System.out.println(m.toString());
+        }
+        if(!olderMessages.isEmpty()){
+          LOGGER.info("sending old messages to {}",userID);
+          for(Message m:olderMessages){
+            try{
+              String jsonMessage = JsonConverter.parseObjectToJson(m);
+              sendMessage(jsonMessage);
+              if(!m.getDataType().equals(DataType.TEXT))
+                Thread.sleep(200);
+            }catch(IOException e){
+              // LOGGER.error("error in sending old message to {}",userID);
+            }
+          }
+        }
         String message=null;
         while(!Thread.currentThread().isInterrupted()){
           message=clientInputQueue.take();
@@ -193,7 +201,7 @@ public class ClientHandler implements Runnable{
           }catch(IOException e){
             e.printStackTrace();
           }
-          boolean updateLastTime=SqlHandlerPasswords.updateLastLoginTime(userID,LocalDateTime.now());
+          boolean updateLastTime=SqlHandlerPasswords.updateLastLoginTime(userID,Instant.now());
           if(updateLastTime){
             LOGGER.info("Zaktualizowano czas ostatniej logowania uzytkownika {}",userID);
           }else{

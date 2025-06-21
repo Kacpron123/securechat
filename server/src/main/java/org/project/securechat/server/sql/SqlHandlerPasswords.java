@@ -6,7 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.time.LocalDateTime;
+import java.time.Instant;
 public class SqlHandlerPasswords {
 
   private static final String DB_URL = "jdbc:sqlite:securechat.db"; // Nazwa pliku bazy danych
@@ -35,7 +35,7 @@ public class SqlHandlerPasswords {
         "username VARCHAR(50) UNIQUE NOT NULL," +
         "password VARCHAR(50) NOT NULL," + //for now is not hash for chcecking
         "rsa_public_key TEXT, "+ // 'data' jako TEXT dla daty
-        "last_login_time DATETIME"+ // 
+        "last_login_time TEXT"+ // 
         ");";
 
     try (Connection conn = connect();
@@ -46,7 +46,7 @@ public class SqlHandlerPasswords {
       System.err.println("Błąd podczas tworzenia tabeli: " + e.getMessage());
     }
   }
-  public static boolean updateLastLoginTime(Long id, LocalDateTime lastLoginTime) {
+  public static boolean updateLastLoginTime(Long id, Instant lastLoginTime) {
     String sql = "UPDATE users SET last_login_time = ? WHERE user_id = ?";
     try (Connection conn = connect();
       PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -71,7 +71,7 @@ public class SqlHandlerPasswords {
       pstmt.setString(1, username);
       pstmt.setString(2, password);
       pstmt.setNull(3, java.sql.Types.VARCHAR);
-      pstmt.setString(4, LocalDateTime.now().toString());
+      pstmt.setString(4, Instant.now().toString());
       int rowsAffected = pstmt.executeUpdate();
       return rowsAffected == 1; // Jeśli dodano 1 wiersz, to sukces
     } catch (SQLException e) {

@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.project.securechat.client.sql.SqlHandlerConversations;
+import org.project.securechat.client.sql.SqlHandlerMessages;
 import org.project.securechat.client.sql.SqlHandlerRsa;
 import org.project.securechat.sharedClass.JsonConverter;
 import org.project.securechat.sharedClass.Message;
@@ -46,8 +47,8 @@ public class Client {
     // SQLs:
     SqlHandlerConversations.createChatRelated();
     SqlHandlerRsa.createRsaTable();
+    SqlHandlerMessages.createMessagesTable();
     initCommandHandlers();
-    
   }
   
   public void start() {
@@ -117,26 +118,6 @@ public class Client {
 
   }
   private void initCommandHandlers() {
-    commandHandlers.put(DataType.RSA_KEY, msg -> {
-      String[] data = msg.getData().split(";");
-      long user_id = msg.getSenderID();
-      String username = data[0];
-      String rsaKey = data[1];
-      LOGGER.debug("I get information of rsa Key from user{},id:{}", username,user_id);
-      if(SqlHandlerRsa.checkIfUserIdExists(user_id)){
-        LOGGER.debug("public rsa of user already known");
-        return;
-      }
-      if(user_id > 0){
-        LOGGER.info("ODEBRALEM KLUCZ OD SERWERA DLA {}",username);
-        SqlHandlerRsa.insertFriend(user_id,username, rsaKey);
-      LOGGER.info("dodano klucz rsa dla {}",username);
-      }else{
-        LOGGER.info("PODANY UZYTKOWNIK NIE ISTNIEJE NA SERWERZE");
-      }
-      
-      
-    });
 
     commandHandlers.put(DataType.CREATE_2_CHAT,msg ->{
       long chatid=msg.getChatID();
