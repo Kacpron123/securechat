@@ -15,7 +15,6 @@ public class SqlHandlerRsa {
     Connection conn = null;
     try {
       conn = DriverManager.getConnection(DB_URL);
-      LogManager.getLogger().trace("Połączono z bazą danych SQLite.");
     } catch (SQLException e) {
       LOGGER.fatal("cannot conect to database");
     }

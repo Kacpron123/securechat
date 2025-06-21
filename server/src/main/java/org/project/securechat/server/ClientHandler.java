@@ -1,5 +1,4 @@
 package org.project.securechat.server;
-import org.project.securechat.server.sql.SqlExecutor;
 import org.project.securechat.server.sql.SqlHandlerConversations;
 import org.project.securechat.server.sql.SqlHandlerMessages;
 import org.project.securechat.server.sql.SqlHandlerPasswords;

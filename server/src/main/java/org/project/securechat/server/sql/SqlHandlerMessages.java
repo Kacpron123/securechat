@@ -18,7 +18,7 @@ public class SqlHandlerMessages {
     Connection conn = null;
     try {
       conn = DriverManager.getConnection(DB_URL);
-      System.out.println("Połączono z bazą danych SQLite.");
+
     } catch (SQLException e) {
       System.err.println("Błąd połączenia z bazą danych: " + e.getMessage());
     }
