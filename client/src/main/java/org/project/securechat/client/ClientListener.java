@@ -119,6 +119,11 @@ public class ClientListener implements Runnable {
       currentAesKey = null;
       LOGGER.info("HEADER cleared KEY CLEANER");
     });
+    commandHandlers.put("/help", msg -> {
+      System.out.println("/exit\texit an app");
+      System.out.println("/quit\texit from current chat");
+      System.out.println("/chat [name]\t open chat [name]");
+    });
   }
 
   private void process(String message) {
