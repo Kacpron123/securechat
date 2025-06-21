@@ -90,7 +90,7 @@ public class ClientListener implements Runnable {
       try{
         LOGGER.debug("creating_aes_key");
         SecretKey aesKey = EncryptionService.createAesKey();
-        
+
         String rsaKeyHeader = SqlHandlerRsa.getRsaKey(userId);
         PublicKey userRSA = EncryptionService.getPublicKeyFromBytes(EncryptionService.getBytesFromString64((rsaKeyHeader)));
             
@@ -111,8 +111,8 @@ public class ClientListener implements Runnable {
         return;
       }
       headerId=check_chat_id;
+      currentAesKey = EncryptionService.getAesKeyFromString(SqlHandlerConversations.getaesKey(headerId));
       LOGGER.info("header set to: {}",headerId);
-      
     });
     commandHandlers.put("/quit", msg -> {
       headerId = 0;

@@ -8,6 +8,7 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 
+import org.project.securechat.server.sql.SqlHandlerMessages;
 import org.project.securechat.sharedClass.*;
 
 import org.apache.logging.log4j.LogManager;
@@ -37,9 +38,9 @@ public class ServerReceiver implements Runnable {
       while (!Thread.currentThread().isInterrupted()) {
         message = in.readUTF();
         LOGGER.trace("I get raw message:\n{}",message);
-        // mess = JsonConverter.parseDataToObject(message, Message.class);
-        // SqlHandlerMessages.insertMessage(0, 0, , message);
-        // TODO saving files
+        // TODO create new thread to save messages
+        mess = JsonConverter.parseDataToObject(message, Message.class);
+        SqlHandlerMessages.insertMessage(mess);
         serverInputQueue.put(message);
         /* 
        try{

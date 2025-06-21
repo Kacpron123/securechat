@@ -70,7 +70,7 @@ public class Server {
   static void sendMessage(long id,Message mess){
     ClientHandler ch=clients.get(id);
     if(ch==null){
-      LOGGER.error("clientHandler id {} not exist",id);
+      LOGGER.info("user {} not online",id);
     }
     else
       ch.sendMessage(mess);
