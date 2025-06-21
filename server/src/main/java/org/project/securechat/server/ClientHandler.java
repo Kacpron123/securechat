@@ -92,7 +92,7 @@ public class ClientHandler implements Runnable{
       // });
       commandHandler.put(DataType.CREATE_2_CHAT,msg->{
           LOGGER.debug("cerating new chat");
-          long creatorID = msg.getSenderID();
+          // long creatorID = msg.getSenderID();
           String[] data = msg.getData().split(";");
           long user1Id = Long.parseLong(data[0]);
           String aes1 = data[1];
@@ -152,14 +152,11 @@ public class ClientHandler implements Runnable{
       } catch(IOException e){
         LOGGER.error(e);
         Message mess = null;
-         Server server = Server.getInstance();
-         try{
-         mess = JsonConverter.parseDataToObject(message,Message.class);
-         
-      }
-     catch(IOException d){
-      LOGGER.error(d);
-        
+        try{
+        mess = JsonConverter.parseDataToObject(message,Message.class);
+        }
+      catch(IOException d){
+        LOGGER.error(d);
       }
       LOGGER.debug("klienta {} nie ma na serwerze",mess.getChatID());
     //  server.removeClient(mess.getChatID()); whyy?

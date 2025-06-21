@@ -208,7 +208,7 @@ public class Login implements Runnable {
     // Zakładam, że ClientHandler ma konstruktor(Socket, String login,
     // BlockingQueue, DataOutputStream)
     long user_id=SqlHandlerPasswords.getUserId(login);
-    if(firstTime == true || SqlHandlerPasswords.getPublicKey(user_id)== null){
+    if(firstTime == true || SqlHandlerPasswords.getPublicKey(user_id) == null){
 
       LOGGER.info("WYSYLAM WIADOMOSC Z PROSBA O KLUCZ");
       out.writeUTF("RSA_EXCHANGE");
@@ -227,6 +227,7 @@ public class Login implements Runnable {
       }
      
     }
+
     long userid=SqlHandlerPasswords.getUserId(login);
     out.writeUTF("Welcome;"+login+";"+userid);
     out.flush();
@@ -234,7 +235,6 @@ public class Login implements Runnable {
     
     // start receiver here
     receiver = new ServerReceiver(in, preClientInputQueue,executor);
-      
     executor.submit(receiver);
     LOGGER.info("ClientReceiver thread started for client: {}", clientSocket.getInetAddress());
 
@@ -243,12 +243,8 @@ public class Login implements Runnable {
     
     executor.submit(handler);
     LOGGER.info("Main ClientHandler started for user: {}", login);
-    while(!executor.isTerminated());
+
     LOGGER.error("watek LOGIN przerwany" );
-    // TODO kill login as soon as logged
-    executor.shutdownNow();
-    in.close();
-    out.close();
-    Thread.currentThread().interrupt();
+
   }
 }
