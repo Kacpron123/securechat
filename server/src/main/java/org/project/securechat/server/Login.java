@@ -243,8 +243,6 @@ public class Login implements Runnable {
     
     executor.submit(handler);
     LOGGER.info("Main ClientHandler started for user: {}", login);
-
-    LOGGER.error("watek LOGIN przerwany" );
-
+    LOGGER.info("watek LOGIN przerwany" );
   }
 }

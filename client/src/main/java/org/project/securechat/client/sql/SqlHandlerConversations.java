@@ -1,6 +1,5 @@
 package org.project.securechat.client.sql;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -9,19 +8,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SqlHandlerConversations {
-   private static final String DB_URL = "jdbc:sqlite:client_database.db";
+public class SqlHandlerConversations extends BaseSQL {
 
-    private static Connection connect() {
-    Connection conn = null;
-    try {
-      conn = DriverManager.getConnection(DB_URL);
-
-    } catch (SQLException e) {
-      System.err.println("Błąd połączenia z bazą danych: " + e.getMessage());
-    }
-    return conn;
-  }
   public static void createConversationsTable() {
   String sql = "CREATE TABLE IF NOT EXISTS conversations (" +
     "chat_id VARCHAR(100) PRIMARY KEY," +
@@ -29,7 +17,7 @@ public class SqlHandlerConversations {
     "user2 VARCHAR(50) NOT NULL," +
     "aes_key_for_user1 TEXT ," +
     "aes_key_for_user2 TEXT " +
-  ");";
+    ");";
 
     try (Connection conn = connect();
         Statement stmt = conn.createStatement()) {

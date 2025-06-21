@@ -1,25 +1,12 @@
 package org.project.securechat.client.sql;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-public class SqlHandlerRsa {
-  private static final String DB_URL = "jdbc:sqlite:client_database.db";
-  private static final Logger LOGGER = LogManager.getLogger(); 
-  private static Connection connect() {
-    Connection conn = null;
-    try {
-      conn = DriverManager.getConnection(DB_URL);
-    } catch (SQLException e) {
-      LOGGER.fatal("cannot conect to database");
-    }
-    return conn;
-  }
+public class SqlHandlerRsa  extends BaseSQL  {
+
   public static void createRsaTable() {
     String sql = "CREATE TABLE IF NOT EXISTS friends (" +
       "user_id INTEGER PRIMARY KEY, "+

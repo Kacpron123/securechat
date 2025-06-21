@@ -64,7 +64,7 @@ public class ClientListener implements Runnable {
       String username = msg.split(" ")[1];
       Long check_chat_id=SqlHandlerConversations.chat_2_Exist(username);
       if(check_chat_id>0){
-        LOGGER.info("header set to: {}",headerId);
+        LOGGER.info("header set to: {}",check_chat_id);
         headerId=check_chat_id;
         currentAesKey = EncryptionService.getAesKeyFromString(SqlHandlerConversations.getaesKey(headerId));
         return;
