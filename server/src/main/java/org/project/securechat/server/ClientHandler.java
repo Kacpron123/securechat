@@ -68,7 +68,6 @@ public class ClientHandler implements Runnable{
         long user_id;
         String fragment = username.split(":")[1];
         LOGGER.trace("checking rsa for: {}",fragment);
-        // TODO clean RSA_KEY
         if(username.startsWith("USERNAME:"))
           user_id=SqlHandlerPasswords.getUserId(fragment);
         else
