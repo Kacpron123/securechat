@@ -92,6 +92,12 @@ public byte[] base64toBytes(String base64Encoded){
 
     return null;
   }
+  static public boolean checkIfKeysCreated() {
+    File publicKeyFile = new File("key.pub");
+    File privateKeyFile = new File("key.priv");
+    return publicKeyFile.exists() && privateKeyFile.exists();
+  }
+  // TODO static inicjalization, cleaner code RSAImp
   public void writeKeysToFile(KeyPair keyPair) {
     try {
       String publicKeyBase64 = Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());

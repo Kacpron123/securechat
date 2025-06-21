@@ -1,31 +1,18 @@
 package org.project.securechat.client.sql;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import org.apache.logging.log4j.LogManager;
 
-public class SqlHandlerRsa {
-   private static final String DB_URL = "jdbc:sqlite:client_database.db";
-    
-   private static Connection connect() {
-    Connection conn = null;
-    try {
-      conn = DriverManager.getConnection(DB_URL);
-      LogManager.getLogger().trace("Połączono z bazą danych SQLite.");
-    } catch (SQLException e) {
-      System.err.println("Błąd połączenia z bazą danych: " + e.getMessage());
-    }
-    return conn;
-  }
-    public static void createRsaTable() {
-  String sql = "CREATE TABLE IF NOT EXISTS friends (" +
-    "user_id INTEGER PRIMARY KEY, "+
-    "login VARCHAR(50) UNIQUE NOT NULL," +
-    "rsa_public_key TEXT" +
-    ");";
+public class SqlHandlerRsa  extends BaseSQL  {
+
+  public static void createRsaTable() {
+    String sql = "CREATE TABLE IF NOT EXISTS friends (" +
+      "user_id INTEGER PRIMARY KEY, "+
+      "login VARCHAR(50) UNIQUE NOT NULL," +
+      "rsa_public_key TEXT" +
+      ");";
 
     try (Connection conn = connect();
         Statement stmt = conn.createStatement()) {
@@ -108,7 +95,6 @@ public class SqlHandlerRsa {
      return login;
 }
   public static boolean changeLogin(long userID,String login){
-    // TODO change 1-1 chat with old name to new name
     String sql = "UPDATE friends SET login = ? WHERE user_id = ?";
     try (Connection conn = connect();
          PreparedStatement pstmt = conn.prepareStatement(sql)) {

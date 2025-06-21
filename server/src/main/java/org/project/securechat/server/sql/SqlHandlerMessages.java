@@ -18,7 +18,7 @@ public class SqlHandlerMessages {
     Connection conn = null;
     try {
       conn = DriverManager.getConnection(DB_URL);
-      System.out.println("Połączono z bazą danych SQLite.");
+
     } catch (SQLException e) {
       System.err.println("Błąd połączenia z bazą danych: " + e.getMessage());
     }
@@ -69,30 +69,29 @@ public static void insertMessage(long senderId, long  chatId,
 /**
  * Retrieves list of messages sent to user after specified login date.
  * 
- * @param username For now, TODO: change to long, username of user
+ * @param id The unique identifier of the user
  * @param loginDate Login date of the user
  * @return List of messages sent to user after loginDate
  */
-public static List<Message> getOlderMessages(String username,LocalDateTime loginDate){
+public static List<Message> getOlderMessages(Long id,LocalDateTime loginDate){
   //chincking server he is in:
-  long userId=SqlHandlerPasswords.getUserId(username);
   List<Message> messages = new ArrayList<>();
   String sql = "SELECT m.sender_id, m.chat_id, m.data, m.timestamp " +
     "FROM messages m " +
     "INNER JOIN chat_participant cp ON m.chat_id = cp.chat_id " +
-    "WHERE cp.user_id = ? AND m.timestamp < ? " +
+    "WHERE cp.user_id = ? AND m.timestamp > ? " +
     "ORDER BY m.timestamp ASC";
   try (Connection conn = connect();
     PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-    pstmt.setLong(1, userId);
+    pstmt.setLong(1, id);
     pstmt.setString(2, loginDate.toString());
 
     ResultSet rs = pstmt.executeQuery();
 
     while (rs.next()) {
-        String senderId = rs.getString("sender_id");
-        String chatID = rs.getString("chat_id");
+        long senderId = rs.getLong("sender_id");
+        long chatID = rs.getLong("chat_id");
         String data = rs.getString("data");
         String timestamp = rs.getString("timestamp");
 

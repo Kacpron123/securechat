@@ -41,11 +41,13 @@ public class Client {
   private DataInputStream in;
   private BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in,StandardCharsets.UTF_8));
   static public String login;
-  static public long userId;
+  static public long myID;
   public Client(){
+    // SQLs:
     SqlHandlerConversations.createChatRelated();
     SqlHandlerRsa.createRsaTable();
     initCommandHandlers();
+    
   }
   
   public void start() {
@@ -117,7 +119,7 @@ public class Client {
   private void initCommandHandlers() {
     commandHandlers.put(DataType.RSA_KEY, msg -> {
       String[] data = msg.getData().split(";");
-      long user_id = Long.parseLong(msg.getSenderID());
+      long user_id = msg.getSenderID();
       String username = data[0];
       String rsaKey = data[1];
       LOGGER.debug("I get information of rsa Key from user{},id:{}", username,user_id);
@@ -137,13 +139,13 @@ public class Client {
     });
 
     commandHandlers.put(DataType.CREATE_2_CHAT,msg ->{
-      long chatid=Long.parseLong(msg.getChatID());
+      long chatid=msg.getChatID();
       LOGGER.info("i get information about creating chat {}", chatid);
-      long senderId = Long.parseLong(msg.getSenderID());
+      long senderId = msg.getSenderID();
       try {
-        if(!SqlHandlerRsa.checkIfUserIdExists(Long.parseLong(msg.getSenderID()))){
+        if(!SqlHandlerRsa.checkIfUserIdExists(msg.getSenderID())){
           LOGGER.debug("don't have rsa, asking server");
-          Message tosend = new Message(userId, 0, DataType.RSA_KEY, "ID:" + msg.getSenderID());
+          Message tosend = new Message(myID, 0, DataType.RSA_KEY, "ID:" + msg.getSenderID());
           out.writeUTF(JsonConverter.parseObjectToJson(tosend));
           Thread.sleep(200);
         }
@@ -154,7 +156,7 @@ public class Client {
         PrivateKey privkey=EncryptionService.readPrivateKeyFromFile();
         String aes=EncryptionService.getString64FromBytes(EncryptionService.decodeWithRsa(privkey,msg.getData()));
         LOGGER.info("creting chat: {} with aes: {}",chatid,aes);
-        SqlHandlerConversations.Create_2_chat(chatid, Client.userId, senderId, aes);
+        SqlHandlerConversations.Create_2_chat(chatid, Client.myID, senderId, aes);
       } catch (Exception e) {
         LOGGER.error("An error occurred: {}", e.getMessage(), e);
       }

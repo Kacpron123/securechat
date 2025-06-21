@@ -18,7 +18,6 @@ public class SQLiteTableViewer {
     try {
       // Połączenie z bazą danych
       conn = DriverManager.getConnection(DB_URL);
-      System.out.println("Połączono z bazą danych SQLite: " + DB_URL);
 
       // Pobierz nazwy wszystkich tabel
       List<String> tableNames = getAllTableNames(conn);

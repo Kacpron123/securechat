@@ -8,10 +8,13 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.SecretKey;
+
 import java.lang.Runnable;
 import java.security.PublicKey;
 import java.security.KeyPair;
-import java.security.PrivateKey;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,6 +29,7 @@ public class ClientReceiver implements Runnable {
   private BlockingQueue<Message> serverInputQueue;
   private BlockingQueue<String> clientOutputQueue;
   private ExecutorService executor;
+  
 
   private HashMap<String, BlockingDeque<Message>> chatQueues = new HashMap<>();
   private final Map<DataType, Consumer<Message>> commandHandlers = new HashMap<>();
@@ -62,7 +66,7 @@ public class ClientReceiver implements Runnable {
         if (message.startsWith("Welcome")) {
           String[] pack = message.split(";");
           Client.login = pack[1];
-          Client.userId = Long.parseLong(pack[2]);
+          Client.myID = Long.parseLong(pack[2]);
           LOGGER.info("Client login: {}", Client.login);
          
           Client.status.put("OK");
@@ -74,7 +78,7 @@ public class ClientReceiver implements Runnable {
       LOGGER.info("WCHODZE DO DRUGIEJ PETLI");
       while (!Thread.currentThread().isInterrupted()) {
         message = in.readUTF();
-        LOGGER.trace("i get message: {}",message);
+        LOGGER.trace("i get raw message: {}",message);
         Message mess = JsonConverter.parseDataToObject(message, Message.class);
         if(commandHandlers.containsKey(mess.getDataType()))
           commandHandlers.get(mess.getDataType()).accept(mess);
@@ -96,7 +100,7 @@ public class ClientReceiver implements Runnable {
   private void initCommandHandlers() {
     commandHandlers.put(DataType.RSA_KEY, msg -> {
       String[] data = msg.getData().split(";");
-      long user_id = Long.parseLong(msg.getSenderID());
+      long user_id = msg.getSenderID();
       String username = data[0];
       String rsaKey = data[1];
       LOGGER.debug("I get information of rsa Key from user{},id:{}", username,user_id);
@@ -113,6 +117,17 @@ public class ClientReceiver implements Runnable {
       }
       
       
+    });
+    commandHandlers.put(DataType.TEXT,msg ->{
+      SecretKey currentAesKey = EncryptionService.getAesKeyFromString(SqlHandlerConversations.getaesKey(msg.getChatID()));
+      // TODO get chat name
+      try {
+        System.out.println(""+msg.getChatID()+": "+EncryptionService.decryptWithAesKey(currentAesKey, msg.getData()));
+      } catch (BadPaddingException e) {
+        LOGGER.error("ERROR DECRYPTING MESSAGE FROM CHAT {}",msg.getChatID(),e);
+      }
+      // String data=EncryptionService.
+      LOGGER.info("get message ");
     });
     }
 }

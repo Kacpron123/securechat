@@ -1,5 +1,4 @@
 package org.project.securechat.server;
-import org.project.securechat.server.sql.SqlExecutor;
 import org.project.securechat.server.sql.SqlHandlerConversations;
 import org.project.securechat.server.sql.SqlHandlerMessages;
 import org.project.securechat.server.sql.SqlHandlerPasswords;
@@ -22,20 +21,20 @@ import org.project.securechat.sharedClass.Message.DataType;
 import org.project.securechat.sharedClass.*;
 
 public class ClientHandler implements Runnable{
-  private static final Logger LOGGER = LogManager.getLogger(); 
+    private static final Logger LOGGER = LogManager.getLogger(); 
     public Socket socket;
     private ExecutorService executor ;
     DataOutputStream out;
-    public String userID;
+    public long userID;
     private final Map<Message.DataType,Function<Message,Message>> commandHandler= new HashMap<>();
     BlockingQueue<String> clientInputQueue;
 
-    public ClientHandler(Socket socket,String userID, BlockingQueue<String> preClientInputQueue, DataOutputStream out,ExecutorService executor){
+    public ClientHandler(Socket socket,Long userID, BlockingQueue<String> preClientInputQueue, DataOutputStream out,ExecutorService executor){
         this.socket = socket;
-        this.userID= userID;
         this.clientInputQueue=preClientInputQueue;
         this.out=out;
         this.executor = executor;
+        this.userID=userID;
         initCommandHandlers();
         // TODO przeniesc do run
         List<Message> olderMessages = SqlHandlerMessages.getOlderMessages(userID,LocalDateTime.now());
@@ -69,12 +68,13 @@ public class ClientHandler implements Runnable{
         long user_id;
         String fragment = username.split(":")[1];
         LOGGER.trace("checking rsa for: {}",fragment);
+        // TODO clean RSA_KEY
         if(username.startsWith("USERNAME:"))
           user_id=SqlHandlerPasswords.getUserId(fragment);
         else
           user_id=Long.parseLong(fragment);
         username=SqlHandlerPasswords.getUsernameFromUserId(user_id);
-        // user_id=SqlHandlerPasswords.getUserId(username);
+
         String rsaKey = SqlHandlerPasswords.getPublicKey(user_id);
         LOGGER.debug((rsaKey == null) ? "BRAK KLUCZA W BAZIE" : "KLUCZ W BAZIE WYSYLAM");
         try{
@@ -86,13 +86,13 @@ public class ClientHandler implements Runnable{
         }
          return null;
       });
-      commandHandler.put(DataType.TEXT,msg->{
-        executor.submit(() -> new SqlExecutor(msg));
-        return null;
-      });
+      // commandHandler.put(DataType.TEXT,msg->{
+      //   executor.submit(() -> new SqlExecutor(msg));
+      //   return null;
+      // });
       commandHandler.put(DataType.CREATE_2_CHAT,msg->{
           LOGGER.debug("cerating new chat");
-          long creatorID = Long.parseLong(msg.getSenderID());
+          // long creatorID = msg.getSenderID();
           String[] data = msg.getData().split(";");
           long user1Id = Long.parseLong(data[0]);
           String aes1 = data[1];
@@ -105,10 +105,7 @@ public class ClientHandler implements Runnable{
               out.writeUTF(JsonConverter.parseObjectToJson(confirmationMessage));
               out.flush();
               confirmationMessage = new Message(user1Id, chatId, DataType.CREATE_2_CHAT, aes2);
-              SqlHandlerConversations.insertOneToOneChat(user1Id, user2Id, aes1, aes2);
-              String name=SqlHandlerPasswords.getUsernameFromUserId(user2Id);
-              ClientHandler user2Handler=Server.getSocket(name);
-              user2Handler.sendMessage(JsonConverter.parseObjectToJson(confirmationMessage));
+              Server.sendMessage(user2Id,confirmationMessage);
               
           } catch (SQLException e) {
               LOGGER.error("Error creating one-to-one chat: {}", e.getMessage());
@@ -124,14 +121,12 @@ public class ClientHandler implements Runnable{
         });
       commandHandler.put(DataType.TEXT,msg->{
       try {
-          long chatId = Long.parseLong(msg.getChatID());
-          long senderId = Long.parseLong(msg.getSenderID());
-          String user;
+          long chatId = msg.getChatID();
+          long senderId = msg.getSenderID();
           List<Long> usersInChat = SqlHandlerConversations.getUsersFromChat(chatId, senderId);
           for (Long userId : usersInChat) {
-              user=SqlHandlerPasswords.getUsernameFromUserId(userId);
-              Message mess=new Message(userId,Long.parseLong(msg.getChatID()),DataType.TEXT,msg.getData());
-              Server.getSocket(user).sendMessage(JsonConverter.parseObjectToJson(mess));   
+              Message mess=new Message(userId,msg.getChatID(),DataType.TEXT,msg.getData());
+              Server.sendMessage(userId, mess);
           }
       } catch (Exception e) {
           LOGGER.error("Invalid chat ID or sender ID format: {}", e.getMessage());
@@ -140,27 +135,31 @@ public class ClientHandler implements Runnable{
         return null;
       });    
     }
-    public String getLogin(){
+    public Long getID(){
       return userID;
     }
     
+    public void sendMessage(Message mess){
+      try {
+        out.writeUTF(JsonConverter.parseObjectToJson(mess));
+      } catch (IOException e) {
+        LOGGER.error("Error while sending message", e);
+      }
+    }
     public void sendMessage(String message){
       try{  
          out.writeUTF(message);
       } catch(IOException e){
         LOGGER.error(e);
         Message mess = null;
-         Server server = Server.getInstance();
-         try{
-         mess = JsonConverter.parseDataToObject(message,Message.class);
-         
-      }
-     catch(IOException d){
-      LOGGER.error(d);
-        
+        try{
+        mess = JsonConverter.parseDataToObject(message,Message.class);
+        }
+      catch(IOException d){
+        LOGGER.error(d);
       }
       LOGGER.debug("klienta {} nie ma na serwerze",mess.getChatID());
-     server.removeClient(mess.getChatID());
+    //  server.removeClient(mess.getChatID()); whyy?
     }
      
 

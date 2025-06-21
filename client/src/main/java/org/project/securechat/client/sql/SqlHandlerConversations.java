@@ -1,6 +1,5 @@
 package org.project.securechat.client.sql;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -9,27 +8,16 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SqlHandlerConversations {
-   private static final String DB_URL = "jdbc:sqlite:client_database.db";
+public class SqlHandlerConversations extends BaseSQL {
 
-    private static Connection connect() {
-    Connection conn = null;
-    try {
-      conn = DriverManager.getConnection(DB_URL);
-      System.out.println("Połączono z bazą danych SQLite.");
-    } catch (SQLException e) {
-      System.err.println("Błąd połączenia z bazą danych: " + e.getMessage());
-    }
-    return conn;
-  }
-     public static void createConversationsTable() {
+  public static void createConversationsTable() {
   String sql = "CREATE TABLE IF NOT EXISTS conversations (" +
     "chat_id VARCHAR(100) PRIMARY KEY," +
     "user1 VARCHAR(50) NOT NULL," +
     "user2 VARCHAR(50) NOT NULL," +
     "aes_key_for_user1 TEXT ," +
     "aes_key_for_user2 TEXT " +
-");";
+    ");";
 
     try (Connection conn = connect();
         Statement stmt = conn.createStatement()) {
@@ -115,21 +103,6 @@ public static Map<String, String> getConversation(String user1,String user2) {
 
     return result.isEmpty() ? null : result;
   }
-  // static public boolean chat_G_Exist(long id){
-  //   String sql = "SELECT * FROM conversations WHERE chat_id = ?";
-  //   try (Connection conn = connect();
-  //        PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-  //       pstmt.setLong(1, id);
-  //       try (ResultSet rs = pstmt.executeQuery()) {
-  //           return rs.next();
-  //       }
-
-  //   } catch (SQLException e) {
-  //       e.printStackTrace();
-  //       return false;
-  //   }
-  // }
   static public long chat_2_Exist(String username){
     String sql = "SELECT chat_id FROM chats WHERE chat_name = ?";
     try (Connection conn = connect();
@@ -172,6 +145,23 @@ public static Map<String, String> getConversation(String user1,String user2) {
     } catch (SQLException e){
         e.printStackTrace();
     }
+  }
+  static public String getaesKey(long chat_id){
+    String sql = "SELECT AES_KEY FROM chats WHERE chat_id = ?";
+    try (Connection conn = connect();
+        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+        pstmt.setLong(1, chat_id);
+        try (ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getString("AES_KEY");
+            }
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return null;
   }
 
 }

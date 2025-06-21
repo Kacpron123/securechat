@@ -102,7 +102,7 @@ public class Login implements Runnable {
     out.writeUTF("Enter login:");
      out.flush();
     loginAttempt = in.readUTF();
-    if(Server.getSocket(loginAttempt)!=null){
+    if(Server.userActive(SqlHandlerPasswords.getUserId(loginAttempt))){
       LOGGER.error("User {} already logged in", loginAttempt);
       out.writeUTF("User already logged in.");
         out.flush();
@@ -208,7 +208,7 @@ public class Login implements Runnable {
     // Zakładam, że ClientHandler ma konstruktor(Socket, String login,
     // BlockingQueue, DataOutputStream)
     long user_id=SqlHandlerPasswords.getUserId(login);
-    if(firstTime == true || SqlHandlerPasswords.getPublicKey(user_id)== null){
+    if(firstTime == true || SqlHandlerPasswords.getPublicKey(user_id) == null){
 
       LOGGER.info("WYSYLAM WIADOMOSC Z PROSBA O KLUCZ");
       out.writeUTF("RSA_EXCHANGE");
@@ -227,26 +227,22 @@ public class Login implements Runnable {
       }
      
     }
-    out.writeUTF("Welcome;"+login+";"+SqlHandlerPasswords.getUserId(login));
+
+    long userid=SqlHandlerPasswords.getUserId(login);
+    out.writeUTF("Welcome;"+login+";"+userid);
     out.flush();
     
     
     // start receiver here
     receiver = new ServerReceiver(in, preClientInputQueue,executor);
-      
     executor.submit(receiver);
     LOGGER.info("ClientReceiver thread started for client: {}", clientSocket.getInetAddress());
 
-    ClientHandler handler = new ClientHandler(clientSocket, login, preClientInputQueue, out,executor);
+    ClientHandler handler = new ClientHandler(clientSocket, userid, preClientInputQueue, out,executor);
     Server.getInstance().addClient(handler);
     
     executor.submit(handler);
     LOGGER.info("Main ClientHandler started for user: {}", login);
-    while(!executor.isTerminated());
-    LOGGER.error("watek LOGIN przerwany" );
-    executor.shutdownNow();
-    in.close();
-    out.close();
-    Thread.currentThread().interrupt();
+    LOGGER.info("watek LOGIN przerwany" );
   }
 }
