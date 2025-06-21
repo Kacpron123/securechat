@@ -16,9 +16,9 @@ public class JsonTest
   String payload;
   @BeforeEach
   void setUp(){
-    mess = new Message("Adam","Pawel",DataType.TEXT,"bardzo wazna wiadomosc");
+    mess = new Message(2,4,DataType.TEXT,"bardzo wazna wiadomosc");
     System.out.println(mess.getTimestamp().toString());
-    payload = "{ \"senderID\" : \"Pawel\", \"chatID\" : \"Adam\",\"timestamp\":\"2025-05-26T08:45:48.641588900Z\",\"dataType\":\"FILE\", \"data\":\"witam\" }";
+    payload = "{ \"senderID\" : 2, \"chatID\" : 4,\"timestamp\":\"2025-05-26T08:45:48.641588900Z\",\"dataType\":\"FILE\", \"data\":\"witam\" }";
   
   }
   @Test

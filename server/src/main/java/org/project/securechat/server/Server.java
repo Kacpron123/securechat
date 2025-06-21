@@ -68,7 +68,12 @@ public class Server {
   }
 
   static void sendMessage(long id,Message mess){
-    clients.get(id).sendMessage(mess);
+    ClientHandler ch=clients.get(id);
+    if(ch==null){
+      LOGGER.error("clientHandler id {} not exist",id);
+    }
+    else
+      ch.sendMessage(mess);
   }
 
   public static void main(String[] args) {

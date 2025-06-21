@@ -90,8 +90,8 @@ public static List<Message> getOlderMessages(Long id,LocalDateTime loginDate){
     ResultSet rs = pstmt.executeQuery();
 
     while (rs.next()) {
-        String senderId = rs.getString("sender_id");
-        String chatID = rs.getString("chat_id");
+        long senderId = rs.getLong("sender_id");
+        long chatID = rs.getLong("chat_id");
         String data = rs.getString("data");
         String timestamp = rs.getString("timestamp");
 

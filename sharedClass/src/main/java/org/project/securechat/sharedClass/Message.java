@@ -9,17 +9,10 @@ public class Message {
   public Message() {
   }
   
-  public Message(String senderID, String chatID, DataType dataType, String data) {
-    this.senderID = senderID;
-    this.chatID = chatID;
-  
-    this.dataType = dataType;
-    this.timestamp = Instant.now();
-    
-    this.data = data;
-  
+  public Message(long senderID, long chatID, DataType dataType, String data) {
+    this(senderID, chatID, dataType, data, Instant.now().toString());
   }
-    public Message(String senderID, String chatID, DataType dataType, String data,String timestamp) {
+    public Message(long senderID, long chatID, DataType dataType, String data,String timestamp) {
     this.senderID = senderID;
     this.chatID = chatID;
   
@@ -29,18 +22,10 @@ public class Message {
     this.data = data;
   
   }
-  public Message(long userId,long chatId,DataType dataType,String data){
-    this.senderID = String.valueOf(userId);
-    this.chatID = String.valueOf(chatId);
-  
-    this.dataType = dataType;
-    this.timestamp = Instant.now();
-    
-    this.data = data;
-  }
 
-  private String senderID;
-  private String chatID;
+
+  private long senderID;
+  private long chatID;
   private Instant timestamp;
   private DataType dataType;
  private String data; // for now
@@ -74,19 +59,19 @@ public class Message {
     System.out.println(data);
   }
 
-  public String getSenderID() {
+  public long getSenderID() {
     return senderID;
   }
 
-  public void setSenderID(String senderID) {
+  public void setSenderID(long senderID) {
     this.senderID = senderID;
   }
 
-  public String getChatID() {
+  public long getChatID() {
     return chatID;
   }
 
-  public void setChatID(String chatID) {
+  public void setChatID(long chatID) {
     this.chatID = chatID;
   }
 

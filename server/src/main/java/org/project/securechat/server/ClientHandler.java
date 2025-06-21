@@ -22,7 +22,7 @@ import org.project.securechat.sharedClass.Message.DataType;
 import org.project.securechat.sharedClass.*;
 
 public class ClientHandler implements Runnable{
-  private static final Logger LOGGER = LogManager.getLogger(); 
+    private static final Logger LOGGER = LogManager.getLogger(); 
     public Socket socket;
     private ExecutorService executor ;
     DataOutputStream out;
@@ -93,7 +93,7 @@ public class ClientHandler implements Runnable{
       // });
       commandHandler.put(DataType.CREATE_2_CHAT,msg->{
           LOGGER.debug("cerating new chat");
-          long creatorID = Long.parseLong(msg.getSenderID());
+          long creatorID = msg.getSenderID();
           String[] data = msg.getData().split(";");
           long user1Id = Long.parseLong(data[0]);
           String aes1 = data[1];
@@ -106,7 +106,6 @@ public class ClientHandler implements Runnable{
               out.writeUTF(JsonConverter.parseObjectToJson(confirmationMessage));
               out.flush();
               confirmationMessage = new Message(user1Id, chatId, DataType.CREATE_2_CHAT, aes2);
-              SqlHandlerConversations.insertOneToOneChat(user1Id, user2Id, aes1, aes2);
               Server.sendMessage(user2Id,confirmationMessage);
               
           } catch (SQLException e) {
@@ -123,12 +122,12 @@ public class ClientHandler implements Runnable{
         });
       commandHandler.put(DataType.TEXT,msg->{
       try {
-          long chatId = Long.parseLong(msg.getChatID());
-          long senderId = Long.parseLong(msg.getSenderID());
+          long chatId = msg.getChatID();
+          long senderId = msg.getSenderID();
           List<Long> usersInChat = SqlHandlerConversations.getUsersFromChat(chatId, senderId);
           for (Long userId : usersInChat) {
-              Message mess=new Message(userId,Long.parseLong(msg.getChatID()),DataType.TEXT,msg.getData());
-              Server.sendMessage(senderId, mess);;   
+              Message mess=new Message(userId,msg.getChatID(),DataType.TEXT,msg.getData());
+              Server.sendMessage(userId, mess);
           }
       } catch (Exception e) {
           LOGGER.error("Invalid chat ID or sender ID format: {}", e.getMessage());
@@ -143,8 +142,8 @@ public class ClientHandler implements Runnable{
     
     public void sendMessage(Message mess){
       try {
-        clientInputQueue.put(JsonConverter.parseObjectToJson(mess));
-      } catch (InterruptedException | IOException e) {
+        out.writeUTF(JsonConverter.parseObjectToJson(mess));
+      } catch (IOException e) {
         LOGGER.error("Error while sending message", e);
       }
     }
