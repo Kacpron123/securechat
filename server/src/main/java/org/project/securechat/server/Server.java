@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.security.MessageDigest;
 import java.util.HashMap;
 
 import org.apache.logging.log4j.LogManager;
