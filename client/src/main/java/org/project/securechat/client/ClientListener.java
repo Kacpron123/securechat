@@ -130,6 +130,7 @@ public class ClientListener implements Runnable {
      * Question of the list of commands that the client recognizes
      */
     commandHandlers.put("/help", msg -> {
+      //TODO using /help in chat
       System.out.println("/exit\texit an app");
       System.out.println("/quit\texit from current chat");
       System.out.println("/chat [name]\t open chat [name]");

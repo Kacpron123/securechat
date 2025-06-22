@@ -1,7 +1,6 @@
 package org.project.securechat.server.sql;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,20 +9,30 @@ import java.util.ArrayList;
 import java.util.List;
 import org.project.securechat.sharedClass.Message;
 import org.project.securechat.sharedClass.Message.DataType;
-public class SqlHandlerMessages {
-  private static final String DB_URL = "jdbc:sqlite:securechat.db"; // Nazwa pliku bazy danych
- 
-  private static Connection connect() {
-    Connection conn = null;
-    try {
-      conn = DriverManager.getConnection(DB_URL);
-
-    } catch (SQLException e) {
-      System.err.println("Błąd połączenia z bazą danych: " + e.getMessage());
-    }
-    return conn;
-  }
-   public static void createMessagesTable() {
+public class SqlHandlerMessages extends BaseSQL{
+  /**
+   * This class provides utility methods for performing SQL operations related to the 'messages' table.
+   * It encapsulates the database interactions for storing, retrieving, and managing chat messages.
+   *
+   * <p>
+   * The 'messages' table is structured to store individual chat messages and contains the following columns:
+   * <ul>
+   * <li>{@code id} (INTEGER PRIMARY KEY AUTOINCREMENT): A unique, auto-generated identifier for each message.</li>
+   * <li>{@code sender_id} (INTEGER NOT NULL): The identifier of the user who sent the message. This column typically
+   * references the {@code user_id} in the 'friends' (or 'users') table, establishing a foreign key relationship.</li>
+   * <li>{@code chat_id} (INTEGER NOT NULL): The identifier of the chat conversation to which the message belongs. This column
+   * typically references the {@code chat_id} in the 'chats' table, establishing a foreign key relationship.</li>
+   * <li>{@code type} (VARCHAR(50) NOT NULL): Defines the nature or category of the message content (e.g., "TEXT", "IMAGE", "FILE").
+   * This type is typically mapped to an enumeration, such as {@link org.project.securechat.sharedClass.Message}.</li>
+   * <li>{@code data} (TEXT NOT NULL): The actual content of the message. For text messages, this would be the message string.
+   * For other types, it might store file paths, URLs, or serialized data.</li>
+   * <li>{@code timestamp} (DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP): The precise date and time when the message was sent or recorded.
+   * This column usually defaults to the current system timestamp upon insertion.</li>
+   * </ul>
+   * </p>
+   *
+   */
+  public static void createMessagesTable() {
    String sql = "CREATE TABLE IF NOT EXISTS messages (" +
     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
     "sender_id INTEGER NOT NULL," +
@@ -37,9 +46,9 @@ public class SqlHandlerMessages {
     try (Connection conn = connect();
         Statement stmt = conn.createStatement()) {
       stmt.execute(sql);
-      System.out.println("Tabela 'messages' została utworzona (jeśli nie istniała).");
+      LOGGER.info("Table 'messages' has been created (if it did not exist).");
     } catch (SQLException e) {
-      System.err.println("Błąd podczas tworzenia tabeli 'messages': " + e.getMessage());
+      LOGGER.error("Error while creating table 'messages': {}", e.getMessage(), e);
     }
   }
   
@@ -68,7 +77,7 @@ public static void insertMessage(Message mess) {
         pstmt.executeUpdate();
 
     } catch (SQLException e) {
-        e.printStackTrace();
+        LOGGER.error("Error while inserting message into database: {}", e.getMessage(), e);
     }
 }
 /**
@@ -107,7 +116,7 @@ public static List<Message> getOlderMessages(Long id){
     }
 
 } catch (SQLException e) {
-    e.printStackTrace();
+    LOGGER.error("Error while retrieving older messages for user {}: {}", id, e.getMessage(), e);
   }
       return messages;
 }

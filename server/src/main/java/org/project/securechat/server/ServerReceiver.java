@@ -14,6 +14,13 @@ import org.apache.logging.log4j.Logger;
 
 import java.lang.Runnable;
 
+/**
+ * Listens for messages from the clients and adds them to the server input queue.
+ * 
+ * It is a part of the server and is used to receive messages from the clients.
+ * It is a Runnable and can be run in a separate thread.
+ */
+// (TODO ClientHandler)
 public class ServerReceiver implements Runnable {
   private DataInputStream in;
   private BlockingQueue<String> serverInputQueue;
@@ -27,6 +34,10 @@ public class ServerReceiver implements Runnable {
     this.executor = executor;
   }
 
+  /**
+   * Main loop of the receiver. Listens for messages from the clients and adds
+   * them to the server input queue.
+   */
   @Override
   public void run() {
     LOGGER.info("RECEIVER wlaczony");

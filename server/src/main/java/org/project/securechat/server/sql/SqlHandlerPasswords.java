@@ -1,51 +1,52 @@
 package org.project.securechat.server.sql;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
-public class SqlHandlerPasswords {
+public class SqlHandlerPasswords extends BaseSQL{
 
-  private static final String DB_URL = "jdbc:sqlite:securechat.db"; // Nazwa pliku bazy danych
-
-  public static void main(String[] args) {
-    createUsersTable();
-    System.out.println("Operacje zakończone. Sprawdź plik loginDB.db");
-  }
-
-  // Metoda do łączenia się z bazą danych
-  private static Connection connect() {
-    Connection conn = null;
-    try {
-      conn = DriverManager.getConnection(DB_URL);
-
-    } catch (SQLException e) {
-      System.err.println("Błąd połączenia z bazą danych: " + e.getMessage());
-    }
-    return conn;
-  }
-
-  // Metoda do tworzenia tabeli
+  /**
+   * Creates the 'users' table to store user information, including RSA public keys.
+   * 
+   * <p>
+   * The 'users' table contains the following columns:
+   * <ul>
+   * <li>{@code user_id} (INTEGER PRIMARY KEY AUTOINCREMENT): A unique numerical identifier for the user.</li>
+   * <li>{@code username} (VARCHAR(50) UNIQUE NOT NULL): A unique login name for the user.</li>
+   * <li>{@code password} (VARCHAR(50) NOT NULL): The password associated with the user, used for authentication. Note that this should be hashed and salted in a real application.</li>
+   * <li>{@code rsa_public_key} (VARCHAR(2048) NOT NULL): The RSA public key associated with the user, used for secure communication.</li>
+   * <li>{@code last_login_time} (TEXT NOT NULL): The time when the user last logged in.</li>
+   * </ul>
+   * </p>
+   */
   public static void createUsersTable() {
     String sql = "CREATE TABLE IF NOT EXISTS users (" +
         "user_id INTEGER PRIMARY KEY AUTOINCREMENT," +
         "username VARCHAR(50) UNIQUE NOT NULL," +
         "password VARCHAR(50) NOT NULL," + //for now is not hash for chcecking
-        "rsa_public_key TEXT, "+ // 'data' jako TEXT dla daty
+        "rsa_public_key TEXT, "+ // 'data' jako TEXT dla daty //TODO create as NOT NULL, registration without asking key
         "last_login_time TEXT"+ // 
         ");";
 
     try (Connection conn = connect();
         Statement stmt = conn.createStatement()) {
       stmt.execute(sql);
-      System.out.println("Tabela 'users' została utworzona (jeśli nie istniała).");
+      LOGGER.info("Table 'users' has been created (if it did not exist).");
     } catch (SQLException e) {
-      System.err.println("Błąd podczas tworzenia tabeli: " + e.getMessage());
+      LOGGER.error("Error creating table: {}", e.getMessage());
     }
   }
+  
+  /**
+   * Updates the last login time for the user with the specified ID.
+   * 
+   * @param id The ID of the user.
+   * @param lastLoginTime The new last login time for the user.
+   * @return true if the last login time was successfully updated, false otherwise.
+   */
   public static boolean updateLastLoginTime(Long id, Instant lastLoginTime) {
     String sql = "UPDATE users SET last_login_time = ? WHERE user_id = ?";
     try (Connection conn = connect();
@@ -56,12 +57,18 @@ public class SqlHandlerPasswords {
       int rowsAffected = pstmt.executeUpdate();
       return rowsAffected > 0;
     } catch (SQLException e) {
-      System.err.println("Błąd podczas aktualizacji czasu ostatniej logowania dla użytkownika '" + id + "': " + e.getMessage());
+      LOGGER.error("Error updating last login time for user {}: {}", id, e.getMessage());
       return false;
     }
   }
 
-  // Metoda do wstawiania danych
+  /**
+   * Inserts a new user into the database.
+   * 
+   * @param username The login name of the user to be inserted.
+   * @param password The password of the user to be inserted.
+   * @return true if the user is successfully inserted, false otherwise.
+   */
   public static boolean insertUser(String username, String password) {
     String sql = "INSERT INTO users(username, password,rsa_public_key,last_login_time) VALUES(?,?,?,?)";
 
@@ -75,11 +82,17 @@ public class SqlHandlerPasswords {
       int rowsAffected = pstmt.executeUpdate();
       return rowsAffected == 1; // Jeśli dodano 1 wiersz, to sukces
     } catch (SQLException e) {
-      System.err.println("Błąd podczas wstawiania użytkownika '" + username + "': " + e.getMessage());
+      LOGGER.error("Error inserting user '{}' into the database: {}", username, e.getMessage());
       return false;
     }
   }
   
+  /**
+   * Retrieves the username associated with the user with the specified ID from the 'users' table.
+   * 
+   * @param userId The ID of the user to retrieve the username for.
+   * @return The username associated with the user, or null if the user does not exist.
+   */
   public static String getUsernameFromUserId(long userId) {
     String sql = "SELECT username FROM users WHERE user_id = ?";
     try (Connection conn = connect();
@@ -92,10 +105,17 @@ public class SqlHandlerPasswords {
         return rs.getString("username");
       }
     } catch (SQLException e) {
-      System.err.println("Błąd podczas pobierania nazwy użytkownika o ID=" + userId + ": " + e.getMessage());
+      LOGGER.error("Error retrieving username for user with ID={} from the database: {}", userId, e.getMessage());
     }
     return null;
   }
+  /**
+   * Updates the RSA public key associated with the user with the specified username in the 'users' table.
+   * 
+   * @param username The username of the user to update the RSA public key for.
+   * @param rsaKey The new RSA public key to be associated with the user.
+   * @return true if the RSA public key is successfully updated, false if the user does not exist, or if the RSA public key already exists.
+   */
   public static boolean updateKey(String username, String rsaKey) {
     String selectSql = "SELECT rsa_public_key FROM users WHERE username = ?";
     String updateSql = "UPDATE users SET rsa_public_key = ? WHERE username = ?";
@@ -126,10 +146,16 @@ public class SqlHandlerPasswords {
         }
 
     } catch (SQLException e) {
-        e.printStackTrace();
+        LOGGER.error("Error updating RSA key: {}", e.getMessage(), e);
         return false;
     }
   }
+  /**
+   * Retrieves the RSA public key associated with the user with the specified ID from the 'users' table.
+   * 
+   * @param userId The ID of the user to retrieve the RSA public key for.
+   * @return The RSA public key associated with the user, or null if the user does not exist or if the RSA public key is not set.
+   */
   public static String getPublicKey(long userId) {
     String sql = "SELECT rsa_public_key FROM users WHERE user_id = ?";
 
@@ -146,11 +172,16 @@ public class SqlHandlerPasswords {
         }
 
     } catch (SQLException e) {
-        e.printStackTrace();
+        LOGGER.error("Error retrieving public key for user with ID={} from the database: {}", userId, e.getMessage(), e);
         return null;
     }
 }
-
+  /**
+   * Retrieves the password associated with the user with the specified username from the 'users' table.
+   * 
+   * @param username The username of the user to retrieve the password for.
+   * @return The password associated with the user, or null if the user does not exist.
+   */
   public static String getUserPassword(String username) {
     String sql = "SELECT password FROM users WHERE username = ?";
     String password = null;
@@ -165,7 +196,7 @@ public class SqlHandlerPasswords {
         password = rs.getString("password");
       }
     } catch (SQLException e) {
-      System.err.println("Błąd podczas pobierania hasła dla użytkownika '" + username + "': " + e.getMessage());
+      LOGGER.error("Error retrieving password for user with username='{}' from the database: {}", username, e.getMessage(), e);
     }
     return password;
   }
@@ -184,7 +215,7 @@ public class SqlHandlerPasswords {
           return rs.getLong("user_id");
       }
     }catch(SQLException e){
-      System.err.println("Błąd podczas sprawdzania użytkownika '"+username+"' "+e.getMessage());
+      LOGGER.error("Error checking user '{}' from the database: {}", username, e.getMessage());
     }
     return -1;
   }
@@ -201,9 +232,9 @@ public class SqlHandlerPasswords {
     try (Connection conn = connect();
         Statement stmt = conn.createStatement()) {
       stmt.execute(sql);
-      System.out.println("Tabela '" + tableName + "' została usunięta (jeśli istniała).");
+      LOGGER.info("Table '{}' dropped (if it existed).", tableName);
     } catch (SQLException e) {
-      System.err.println("Błąd podczas usuwania tabeli '" + tableName + "': " + e.getMessage());
+      LOGGER.error("Error dropping table '{}': {}", tableName, e.getMessage());
     }
   }
 }

@@ -20,6 +20,12 @@ import org.apache.logging.log4j.Logger;
 import org.project.securechat.sharedClass.Message.DataType;
 import org.project.securechat.sharedClass.*;
 
+/**
+ * Handles communication with a single client.
+ * 
+ * It receives messages from the client by Receiver and handle them according to the type of the
+ * message.
+ */
 public class ClientHandler implements Runnable{
     private static final Logger LOGGER = LogManager.getLogger(); 
     public Socket socket;
@@ -38,7 +44,15 @@ public class ClientHandler implements Runnable{
         initCommandHandlers();
       
     }
+    /**
+     * Initialize command handlers for processing incoming messages from the client.
+     * 
+     * It reacts to different types of messages and performs appropriate actions.
+     */
     private void initCommandHandlers(){
+      /**
+       * stoping the connection
+       */
       commandHandler.put(DataType.CLOSE_CONNECTION,msg->{
         executor.shutdownNow();
         LOGGER.info("watek ClientHandler przerwany");
@@ -52,6 +66,14 @@ public class ClientHandler implements Runnable{
         }
         return null;
       });
+      /**
+       * reacting to getting question about rsa
+       * message is constructed as:
+       * senderID: id of user who asked
+       * chatID: 0 (server)
+       * DataType: RSA_KEY
+       * Data: "(ID/USERNAME): data"
+       */
       commandHandler.put(DataType.RSA_KEY,msg->{
         String username=msg.getData();
         LOGGER.debug("i get question about public_rsa of user: {}:",username);
@@ -75,12 +97,16 @@ public class ClientHandler implements Runnable{
         }
          return null;
       });
-      // commandHandler.put(DataType.TEXT,msg->{
-      //   executor.submit(() -> new SqlExecutor(msg));
-      //   return null;
-      // });
+      /**
+       * reacting to getting request of creating chat
+       * message is constructed as:
+       * senderID: id of creator
+       * chatID: 0 (server)
+       * DataType: CREATE_2_CHAT
+       * Data: "id1;aes1;id2;aes2"
+       */
       commandHandler.put(DataType.CREATE_2_CHAT,msg->{
-          LOGGER.debug("cerating new chat");
+          LOGGER.debug("creating new chat");
           // long creatorID = msg.getSenderID();
           String[] data = msg.getData().split(";");
           long user1Id = Long.parseLong(data[0]);
@@ -109,6 +135,14 @@ public class ClientHandler implements Runnable{
           // SqlHandlerMessages.insertMessage(creatorID, secondUserId, DataType.CREATE_2_CHAT, aesKey);
           
         });
+      /**
+       * reacting to getting text message
+       * message is constructed as:
+       * senderID: id of sender
+       * chatID: chat
+       * DataType: TEXT
+       * Data: "encrypted message"
+       */
       commandHandler.put(DataType.TEXT,msg->{
       try {
           long chatId = msg.getChatID();
@@ -125,10 +159,19 @@ public class ClientHandler implements Runnable{
         return null;
       });    
     }
+    /**
+     * Get the ID of the user associated with this client.
+     * 
+     * @return ID of the user.
+     */
     public Long getID(){
       return userID;
     }
-    
+    /**
+     * Sends a message to the client.
+     *
+     * @param mess The message object to be sent.
+     */
     public void sendMessage(Message mess){
       try {
         out.writeUTF(JsonConverter.parseObjectToJson(mess));
@@ -136,6 +179,11 @@ public class ClientHandler implements Runnable{
         LOGGER.error("Error while sending message", e);
       }
     }
+    /**
+     * Sends a message to the client.
+     *
+     * @param message The message in string format to be sent.
+     */
     public void sendMessage(String message){
       try{  
          out.writeUTF(message);
@@ -154,6 +202,10 @@ public class ClientHandler implements Runnable{
      
 
     }
+    /**
+     * Main loop of the client handler. It receives messages from the client and
+     * handles them according to their type.
+     */
     @Override
     public void run(){
       try{

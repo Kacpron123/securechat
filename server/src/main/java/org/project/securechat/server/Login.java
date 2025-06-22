@@ -13,7 +13,10 @@ import org.apache.logging.log4j.Logger;
 import org.project.securechat.server.sql.SqlHandlerPasswords;
 
 
-
+/**
+ * Handles the login process for a client.
+ * 
+ */
 public class Login implements Runnable {
   private Socket clientSocket;
   private DataInputStream in;
@@ -35,11 +38,25 @@ public class Login implements Runnable {
   }
 
   private ServerReceiver receiver;
-
+  /**
+   * Checks if the given login and password match the stored values.
+   * 
+   * @param login  the login to check
+   * @param password  the password to check
+   * @return  whether the login and password match the stored values
+   */
   Boolean correctpass(String login, String password) {
     return SqlHandlerPasswords.getUserPassword(login).equals(password);
   }
-
+/**
+ * Main loop of the login process. It manages the login and registration attempts for a client.
+ * 
+ * The user has 3 attempts to successfully log in or register. If the authentication is successful,
+ * the main client handler is started. If all attempts fail, the connection is closed.
+ * 
+ * This method is executed as part of the Runnable interface implementation.
+ * 
+ */
   @Override
   public void run() {
     try {
@@ -87,14 +104,13 @@ public class Login implements Runnable {
   }
 
   /**
-   * Obsługuje pojedynczą próbę logowania i ewentualnie rejestracji.
+   * Handles a single login or registration attempt.
    * 
-   * @param attemptNumber Numer bieżącej próby.
-   * @return Zalogowany login użytkownika lub null, jeśli logowanie się nie
-   *         powiodło.
-   * @throws IOException          Jeśli wystąpi błąd I/O podczas komunikacji.
-   * @throws InterruptedException Jeśli wątek zostanie przerwany podczas
-   *                              oczekiwania na dane.
+   * @param attemptNumber Current attempt number.
+   * @return Successfully logged in user's login or null if login failed.
+   * @throws IOException          If an I/O error occurs during communication.
+   * @throws InterruptedException If the thread is interrupted while waiting for
+   *                              data.
    */
   private String handleAuthenticationAttempt(int attemptNumber) throws IOException, InterruptedException {
     String loginAttempt = null;
@@ -140,6 +156,19 @@ public class Login implements Runnable {
     // Jeśli login istnieje, spróbuj zalogować hasłem
     return attemptLoginWithPassword(loginAttempt);
   }
+  /**
+   * Handles a registration attempt for a new user.
+   * 
+   * <p>
+   * Prompts the user to enter a new password and confirms it. If the passwords
+   * match and the username does not exist in the database, the user is registered.
+   * </p>
+   * 
+   * @param newLogin The login name for the new user.
+   * @return true if registration is successful, false otherwise.
+   * @throws IOException          If an I/O error occurs during communication.
+   * @throws InterruptedException If the thread is interrupted while waiting for input.
+   */
   private boolean handleRegistration(String newLogin) throws IOException, InterruptedException {
     LOGGER.info("Client attempting registration.");
     
@@ -160,6 +189,7 @@ public class Login implements Runnable {
 
     if (SqlHandlerPasswords.getUserId(newLogin)==-1) {
       if (SqlHandlerPasswords.insertUser(newLogin, newPassword)) {
+        //TODO insertUser return long
         LOGGER.info("New user registered: {}", newLogin);
         firstTime = true;
         return true;
@@ -176,6 +206,21 @@ public class Login implements Runnable {
     }
   }
 
+  /**
+   * Attempts to log in using the provided login name and the password entered
+   * by the user.
+   * 
+   * <p>
+   * The user has 3 attempts to enter the correct password. If the password is
+   * correct, the method returns the login name of the user. If all attempts fail,
+   * the method returns null.
+   * </p>
+   * 
+   * @param login The login name to attempt to log in with.
+   * @return The login name if the login is successful, null otherwise.
+   * @throws IOException          If an I/O error occurs during communication.
+   * @throws InterruptedException If the thread is interrupted while waiting for input.
+   */
   private String attemptLoginWithPassword(String login) throws IOException, InterruptedException {
     if (login == null) { // Jeśli poprzedni etap (np. rejestracja) zakończył się błędem
       return null;
@@ -204,7 +249,19 @@ public class Login implements Runnable {
     return null;
   }
 
-  private void startMainClientHandler(String login) throws IOException,InterruptedException {
+  /**
+   * Starts the main client handler for the newly logged in user.
+   * 
+   * <p>
+   * This method is called after a successful login or registration attempt. It
+   * starts a new {@link ClientHandler} to handle communication with the client.
+   * </p>
+   * 
+   * @param login The login name of the newly logged in user.
+   * @throws IOException          If an I/O error occurs during communication.
+   * @throws InterruptedException If the thread is interrupted while waiting for input.
+   */
+  private void startMainClientHandler(String login) throws IOException, InterruptedException {
     // Zakładam, że ClientHandler ma konstruktor(Socket, String login,
     // BlockingQueue, DataOutputStream)
     long user_id=SqlHandlerPasswords.getUserId(login);
