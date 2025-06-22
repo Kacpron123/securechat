@@ -163,5 +163,22 @@ public static Map<String, String> getConversation(String user1,String user2) {
     }
     return null;
   }
+  static public String getName(long chat_id){
+    String sql = "SELECT chat_name FROM chats WHERE chat_id = ?";
+    try (Connection conn = connect();
+        PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
+        pstmt.setLong(1, chat_id);
+        try (ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getString("chat_name");
+            }
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return null;
+  }
+  
 }

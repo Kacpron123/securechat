@@ -18,7 +18,6 @@ import java.lang.Runnable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.project.securechat.sharedClass.Message.DataType;
-import org.w3c.dom.Text;
 import org.project.securechat.sharedClass.*;
 
 public class ClientHandler implements Runnable{

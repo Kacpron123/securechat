@@ -4,12 +4,10 @@ import org.project.securechat.client.implementations.AesImp;
 import org.project.securechat.client.implementations.RsaImp;
 
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
 
 import javax.crypto.SecretKey;
 import javax.crypto.BadPaddingException;
