@@ -11,6 +11,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+/**
+ * Utility class for converting between JSON strings and Java objects using Jackson library.
+ *
+ */
+
 public class JsonConverter {
   public static final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule())
       .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
@@ -26,6 +31,15 @@ public class JsonConverter {
 
   }
 
+
+  /**
+   * Parse a given JSON string into a given target type.
+   *
+   * @param jsonData JSON string to parse
+   * @param targetType target type to parse to
+   * @return parsed object
+   * @throws IOException if there is a problem with the conversion
+   */
   public static <T> T parseDataToObject(String jsonData, Class<T> targetType) throws IOException {
     try {
       JsonNode parsedNode = parse(jsonData);
@@ -38,6 +52,13 @@ public class JsonConverter {
 
   }
 
+  /**
+   * Parse a given object into a JSON string.
+   *
+   * @param obj object to parse
+   * @return JSON string
+   * @throws IOException if there is a problem with the conversion
+   */
   public static <T> String parseObjectToJson(T obj) throws IOException {
     try {
       return objectMapper.writeValueAsString(obj);

@@ -28,7 +28,7 @@ public class Message {
   private long chatID;
   private Instant timestamp;
   private DataType dataType;
- private String data; // for now
+  private String data; // for now
 
 
 
