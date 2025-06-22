@@ -219,22 +219,4 @@ public class ClientListener implements Runnable {
     }
 
   }
-  private String getRsaKeyFromServer(String username){
-    String rsaKeyHeader = null;
-    LOGGER.info("BRAK KLUCZA W BAZIE");
-    Message message = new Message(Client.myID,0,DataType.RSA_KEY,username);
-    LOGGER.info("WYSYLAM ZAPYTANIE O KLUCZ");
-    try{
-      clientOutputQueue.put(JsonConverter.parseObjectToJson(message));
-      
-    Thread.sleep(2000);
-    }catch(InterruptedException | IOException e){
-      LOGGER.error("getRsaKeyFromServer ",e);
-    }
-    
-      LOGGER.info("SPRAWDZAM PONOWNIE CZY KLUCZ W BAZIE");
-    rsaKeyHeader = SqlHandlerRsa.getRsaKey(headerId);
-    LOGGER.info("KLUCZ {}",rsaKeyHeader);
-    return rsaKeyHeader;
-  }
 }

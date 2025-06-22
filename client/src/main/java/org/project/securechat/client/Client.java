@@ -141,12 +141,6 @@ public class Client {
       } catch (Exception e) {
         LOGGER.error("An error occurred: {}", e.getMessage(), e);
       }
-
-
-      // if(!SqlHandlerRsa.checkIfUserIdExists(senderId))
-      //   // send RSA for user
-      //   // break;
-      //   ;
      
     });
   

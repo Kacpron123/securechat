@@ -4,7 +4,6 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -32,7 +31,7 @@ public class ClientReceiver implements Runnable {
   private ExecutorService executor;
   
 
-  private HashMap<String, BlockingDeque<Message>> chatQueues = new HashMap<>();
+  // private HashMap<String, BlockingDeque<Message>> chatQueues = new HashMap<>();
   private final Map<DataType, Consumer<Message>> commandHandlers = new HashMap<>();
   public ClientReceiver(DataInputStream in, BlockingQueue<Message> inputQueue, BlockingQueue<String> clientOutputQueue,
      ExecutorService executor) {
@@ -121,11 +120,10 @@ public class ClientReceiver implements Runnable {
     });
     commandHandlers.put(DataType.TEXT,msg ->{
       SecretKey currentAesKey = EncryptionService.getAesKeyFromString(SqlHandlerConversations.getaesKey(msg.getChatID()));
-
-      // TODO get chat name
+      String name=SqlHandlerConversations.getName(msg.getChatID());
       try {
         String decoded=EncryptionService.decryptWithAesKey(currentAesKey, msg.getData());
-        System.out.println(""+msg.getChatID()+": "+decoded);
+        System.out.println(""+name+": "+decoded);
         msg.setData(decoded);
         SqlHandlerMessages.insertMessage(msg);
       } catch (BadPaddingException e) {
