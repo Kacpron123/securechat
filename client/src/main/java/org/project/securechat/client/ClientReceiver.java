@@ -21,8 +21,11 @@ import org.project.securechat.sharedClass.*;
 import org.project.securechat.sharedClass.Message.DataType;
 import org.project.securechat.client.sql.SqlHandlerConversations;
 import org.project.securechat.client.sql.SqlHandlerMessages;
-import org.project.securechat.client.sql.SqlHandlerRsa;
-
+import org.project.securechat.client.sql.SqlHandlerFriends;
+/**
+ * Receives messages from the server and handles them according to the type of the
+ * message.
+ */
 public class ClientReceiver implements Runnable {
   private static final Logger LOGGER = LogManager.getLogger();
   private DataInputStream in;
@@ -42,7 +45,10 @@ public class ClientReceiver implements Runnable {
     initCommandHandlers();
   }
 
-  @Override
+  /**
+   * Main loop of the client receiver. Listens for messages from the server and
+   * processes them according to their type.
+   */
   public void run() {
     String message=null;
     try {
@@ -97,20 +103,33 @@ public class ClientReceiver implements Runnable {
       Thread.currentThread().interrupt();
     }
   }
+  /**
+   * Initializes the command handlers for processing incoming messages from the server.
+   * 
+   * 
+   */
   private void initCommandHandlers() {
+    /**
+     * reacting to getting rsa
+     * message is constructed as:
+     * senderID: id of user
+     * chatID: 0 (server)
+     * DataType: RSA_KEY
+     * Data: "username;rsakey"
+     */
     commandHandlers.put(DataType.RSA_KEY, msg -> {
       String[] data = msg.getData().split(";");
       long user_id = msg.getSenderID();
       String username = data[0];
       String rsaKey = data[1];
       LOGGER.debug("I get information of rsa Key from user{},id:{}", username,user_id);
-      if(SqlHandlerRsa.checkIfUserIdExists(user_id)){
+      if(SqlHandlerFriends.checkIfUserIdExists(user_id)){
         LOGGER.debug("public rsa of user already known");
         return;
       }
       if(user_id > 0){
         LOGGER.info("ODEBRALEM KLUCZ OD SERWERA DLA {}",username);
-        SqlHandlerRsa.insertFriend(user_id,username, rsaKey);
+        SqlHandlerFriends.insertFriend(user_id,username, rsaKey);
       LOGGER.info("dodano klucz rsa dla {}",username);
       }else{
         LOGGER.info("PODANY UZYTKOWNIK NIE ISTNIEJE NA SERWERZE");
@@ -118,6 +137,14 @@ public class ClientReceiver implements Runnable {
       
       
     });
+    /**
+     * reacting to getting text message
+     * message is constructed as:
+     * senderID: sender
+     * chatID: chat
+     * DataType: TEXT
+     * Data: encrypted message
+     */
     commandHandlers.put(DataType.TEXT,msg ->{
       SecretKey currentAesKey = EncryptionService.getAesKeyFromString(SqlHandlerConversations.getaesKey(msg.getChatID()));
       String name=SqlHandlerConversations.getName(msg.getChatID());

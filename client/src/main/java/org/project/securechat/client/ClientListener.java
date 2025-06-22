@@ -5,50 +5,48 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.SecretKey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.project.securechat.sharedClass.JsonConverter;
 import org.project.securechat.sharedClass.Message;
 import org.project.securechat.sharedClass.Message.DataType;
-import org.project.securechat.client.implementations.AesImp;
-import org.project.securechat.client.implementations.RsaImp;
 import org.project.securechat.client.sql.SqlHandlerConversations;
-import org.project.securechat.client.sql.SqlHandlerRsa;
+import org.project.securechat.client.sql.SqlHandlerFriends;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.lang.Runnable;
-import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
-import java.security.PrivateKey;
 public class ClientListener implements Runnable {
   private static final Logger LOGGER = LogManager.getLogger();
   private BlockingQueue<String> clientOutputQueue;
   private BufferedReader userInput;
   private ExecutorService executor;
- private final Map<String, Consumer<String>> commandHandlers = new HashMap<>();
- private final Rsa rsa = new RsaImp(); 
- private final Aes aes = new AesImp();
- private PublicKey pubKey;
- private PrivateKey privKey;
- private SecretKey currentAesKey = null;
- public ClientListener(BlockingQueue<String> clientOutputQueue, ExecutorService executor, BufferedReader userInput) {
+  private final Map<String, Consumer<String>> commandHandlers = new HashMap<>();
+  private PublicKey pubKey;
+  private SecretKey currentAesKey = null;
+  public ClientListener(BlockingQueue<String> clientOutputQueue, ExecutorService executor, BufferedReader userInput) {
     this.clientOutputQueue = clientOutputQueue;
     this.executor = executor;
     this.userInput = userInput;
     initCommandHandlers();
-   
-    privKey = EncryptionService.readPrivateKeyFromFile();
     pubKey = EncryptionService.readPublicKeyFromFile();
   }
 
   private long headerId = 0;
- private void initCommandHandlers() {
+
+  /**
+   * Variable to store the current chat header id. Used to send the message to
+   * the correct chat.
+   */
+  private void initCommandHandlers() {
+
+    /**
+     * Command to exit from the program.
+     */
     commandHandlers.put("/exit", msg -> {
       Message mess = new Message(Client.myID,0,DataType.CLOSE_CONNECTION,null);
       try{
@@ -56,10 +54,14 @@ public class ClientListener implements Runnable {
       }catch(IOException |InterruptedException e){
         LOGGER.error(e);
       }
-      
-      System.out.println("Rozłączono z czatem.");
+      System.out.println("Disconnected from chat.");
       executor.shutdownNow();
     });
+    /**
+     * moving to chat with user
+     * if dont't have than chat is created
+     * if user isn't known the rsa question is invoke
+     */
     commandHandlers.put("/chat", msg -> {
       Message tosend=null;
       String username = msg.split(" ")[1];
@@ -71,7 +73,7 @@ public class ClientListener implements Runnable {
         return;
       }
       // check if user exist
-      Long userId=SqlHandlerRsa.getUserId(username);
+      Long userId=SqlHandlerFriends.getUserId(username);
       if(userId==-1){
         LOGGER.debug("Don't have user in SQL\nasking Server");
         tosend=new Message(userId,0,DataType.RSA_KEY,"USERNAME:"+username);
@@ -81,7 +83,7 @@ public class ClientListener implements Runnable {
         }catch(Exception e){
           LOGGER.error(e);
         }
-        userId=SqlHandlerRsa.getUserId(username);
+        userId=SqlHandlerFriends.getUserId(username);
         if(userId==-2){
           LOGGER.error("User: {} not exist",username);
           return;
@@ -92,7 +94,7 @@ public class ClientListener implements Runnable {
         LOGGER.debug("creating_aes_key");
         SecretKey aesKey = EncryptionService.createAesKey();
 
-        String rsaKeyHeader = SqlHandlerRsa.getRsaKey(userId);
+        String rsaKeyHeader = SqlHandlerFriends.getRsaKey(userId);
         PublicKey userRSA = EncryptionService.getPublicKeyFromBytes(EncryptionService.getBytesFromString64((rsaKeyHeader)));
             
         String aesMy = EncryptionService.encodeWithRsa(pubKey, aesKey.getEncoded());
@@ -115,11 +117,18 @@ public class ClientListener implements Runnable {
       currentAesKey = EncryptionService.getAesKeyFromString(SqlHandlerConversations.getaesKey(headerId));
       LOGGER.info("header set to: {}",headerId);
     });
+
+    /**
+     * Clearing header and aes key
+     */
     commandHandlers.put("/quit", msg -> {
       headerId = 0;
       currentAesKey = null;
       LOGGER.info("HEADER cleared KEY CLEANER");
     });
+    /**
+     * Question of the list of commands that the client recognizes
+     */
     commandHandlers.put("/help", msg -> {
       System.out.println("/exit\texit an app");
       System.out.println("/quit\texit from current chat");
@@ -127,13 +136,16 @@ public class ClientListener implements Runnable {
     });
   }
 
+  /**
+   * Processes given message from user. It looks for command in message and
+   * handles it if it knows the command. If not, it sends the message to server.
+   * @param message raw message from user
+   */
   private void process(String message) {
-        //System.out.println("DEBUG (ClientListener): JVM Default File Encoding: " + System.getProperty("file.encoding"));
-    LOGGER.info("RAW MESSAGE "+message);
+    LOGGER.trace("RAW MESSAGE "+message);
     
     String command = message.split(" ")[0].toLowerCase();
     Message mess;
-    //String[] pack= encryptMessageRetWithKey(message);
     
     if(command.startsWith("/")){
       if (commandHandlers.containsKey(command)) {
@@ -150,11 +162,10 @@ public class ClientListener implements Runnable {
         LOGGER.info("HEADER N/A");
         return;
       }
-      LOGGER.info("sending mess to {}",headerId);
       mess= new Message(Client.myID, headerId, DataType.TEXT, EncryptionService.encryptWithAesKey(currentAesKey,message));
       try {
           clientOutputQueue.put(JsonConverter.parseObjectToJson(mess));
-          LOGGER.debug("sending message");
+          LOGGER.info("sending message to {}", headerId);
           return;
       } catch (InterruptedException | IOException e) {
           LOGGER.error("Error while sending message", e);
@@ -164,38 +175,8 @@ public class ClientListener implements Runnable {
     
   }
   /**
-   * 
-   * 
-   * @return first key sec message in 64
-   *
+   * The main loop of ClientListener. It waits for user input and processes it.
    */
-  String[] encryptMessageRetWithKey(String message){
-    SecretKey secretKey = aes.generateKey();
-    String encodedAesMessage64 = aes.byteTo64String(aes.encodeMessage(secretKey, message.getBytes(StandardCharsets.UTF_8)));
-    String encoded64Key = aes.byteTo64String(rsa.encodeMessage(pubKey, secretKey.getEncoded()));
-    return new String[]{encoded64Key,encodedAesMessage64};
-  }
-
-  String decryptMessage(String aesKey,String enMessage){
-     byte[] decodedKey = null;
-    try{
-     decodedKey = rsa.decodeMessage(privKey, aes.base64toBytes(aesKey));
-    }
-    catch(BadPaddingException e){
-      LOGGER.error(e);
-    }
-     SecretKey decodedSecretKey = aes.getKeyFromBytes(decodedKey);
-
-     
-      String decodedMessage = null;
-    try{
-       decodedMessage = new String(aes.decodeMessage(decodedSecretKey,rsa.base64toBytes(enMessage)),StandardCharsets.UTF_8);
-
-    }catch(BadPaddingException e){
-      System.out.println(e);
-    }
-    return decodedMessage;
-  }
   @Override
   public void run() {
     LOGGER.info("ClientListener working");
@@ -206,18 +187,13 @@ public class ClientListener implements Runnable {
         System.out.print("Ty: ");
         
         message = userInput.readLine();
-  
         process(message);
-
-        // Tu można dodać wysyłanie wiadomości do serwera/sieci
-        // System.out.println("Wysłano: " + message);
 
       }
       Thread.currentThread().interrupt();
     } catch (IOException e) {
       executor.shutdownNow();
-
-      LOGGER.error("Błąd wejścia/wyjścia: " + e.getMessage());
+      LOGGER.error("Input/output error: " + e.getMessage());
     }
 
   }

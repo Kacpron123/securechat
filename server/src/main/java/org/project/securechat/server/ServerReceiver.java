@@ -3,8 +3,6 @@ package org.project.securechat.server;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 
@@ -20,7 +18,7 @@ public class ServerReceiver implements Runnable {
   private DataInputStream in;
   private BlockingQueue<String> serverInputQueue;
   // new LinkedBlockingDeque<>(10);
-  private HashMap<String, BlockingDeque<Message>> chatQueues = new HashMap<>();
+  // private HashMap<String, BlockingDeque<Message>> chatQueues = new HashMap<>();
   private static final Logger LOGGER = LogManager.getLogger();
   private ExecutorService executor ;
   public ServerReceiver(DataInputStream in, BlockingQueue<String> inputQueue,ExecutorService executor) {
@@ -42,23 +40,6 @@ public class ServerReceiver implements Runnable {
         mess = JsonConverter.parseDataToObject(message, Message.class);
         SqlHandlerMessages.insertMessage(mess);
         serverInputQueue.put(message);
-        /* 
-       try{
-           executor.submit(new SqlExecutor(JsonConverter.parseDataToObject(message,Message.class)));
-        }catch(IOException e){
-          LOGGER.info("NIE DA SIE SPARSOWWAC");
-        }
-        */
-        /*
-         * Message mess = JsonConverter.parseDataToObject(message, Message.class);
-         * if(chatQueues.containsKey(mess.getChatID())){
-         * chatQueues.get(mess.getChatID()).put(mess);
-         * }else{
-         * chatQueues.put(mess.getChatID(),new LinkedBlockingDeque<Message>(10));
-         * }
-         * 
-         * System.out.println(message);
-         */
       }
       
       

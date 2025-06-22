@@ -88,6 +88,7 @@ public class ClientHandler implements Runnable{
           long user2Id = Long.parseLong(data[2]);
           String aes2 = data[3];
           try {
+              // TODO creator create chat, don't make message "crossing"
               long chatId = SqlHandlerConversations.insertOneToOneChat(user1Id, user2Id, aes1, aes2);
               LOGGER.debug("sending messages about  creating chat to members:");
               Message confirmationMessage = new Message(user2Id, chatId, DataType.CREATE_2_CHAT, aes1);

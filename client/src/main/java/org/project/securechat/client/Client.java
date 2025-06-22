@@ -14,7 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.project.securechat.client.sql.SqlHandlerConversations;
 import org.project.securechat.client.sql.SqlHandlerMessages;
-import org.project.securechat.client.sql.SqlHandlerRsa;
+import org.project.securechat.client.sql.SqlHandlerFriends;
 import org.project.securechat.sharedClass.JsonConverter;
 import org.project.securechat.sharedClass.Message;
 import org.project.securechat.sharedClass.Message.DataType;
@@ -27,6 +27,13 @@ import java.io.InputStreamReader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Main class for the client.
+ * 
+ * It is responsible for connecting to the server, sending messages, receiving
+ * messages and handling user input.
+ * 
+ */
 public class Client {
   private static final String SERVER_HOST = "localhost";
   private static final int SERVER_PORT = 12345;
@@ -46,7 +53,7 @@ public class Client {
   public Client(){
     // SQLs:
     SqlHandlerConversations.createChatRelated();
-    SqlHandlerRsa.createRsaTable();
+    SqlHandlerFriends.createRsaTable();
     SqlHandlerMessages.createMessagesTable();
     initCommandHandlers();
   }
@@ -63,8 +70,8 @@ public class Client {
 
       executor.submit(cSender);
       executor.submit(cReceiver);
-      // logowanie
-
+      
+      // login
       while (!executor.isTerminated()) {
 
         String messageForServer = userInput.readLine();
@@ -76,7 +83,6 @@ public class Client {
         clientOutputQueue.put(messageForServer);
         Thread.sleep(2000);
         String response = Client.status.poll();
-        // LOGGER.info("Status {}", response);
         // TODO: checkinng error and aborting
         // correct logged
         if (response != null && response.equals("OK")) {
@@ -117,14 +123,26 @@ public class Client {
     }
 
   }
+  /**
+   * Initialize command handlers for handling commands received from the server.
+   */
   private void initCommandHandlers() {
-
+    // for now here
+    // TODO: use CompletableFuture for handling long-running operations
+    /**
+     * reacting to getting information of create chat
+     * message is constructed as:
+     * senderID: id of creater 
+     * chatID: id of created chat
+     * DataType: CREATE_2_CHAT
+     * Data: "aeskey"
+     */
     commandHandlers.put(DataType.CREATE_2_CHAT,msg ->{
       long chatid=msg.getChatID();
       LOGGER.info("i get information about creating chat {}", chatid);
       long senderId = msg.getSenderID();
       try {
-        if(!SqlHandlerRsa.checkIfUserIdExists(msg.getSenderID())){
+        if(!SqlHandlerFriends.checkIfUserIdExists(msg.getSenderID())){
           LOGGER.debug("don't have rsa, asking server");
           Message tosend = new Message(myID, 0, DataType.RSA_KEY, "ID:" + msg.getSenderID());
           out.writeUTF(JsonConverter.parseObjectToJson(tosend));

@@ -7,6 +7,11 @@ import java.sql.SQLException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Base class for all SQL operations.
+ * 
+ * Provides a common interface for establishing a database connection.
+ */
 public abstract class BaseSQL {
     protected static final Logger LOGGER = LogManager.getLogger();
     // TODO change into client[ID]_database.db

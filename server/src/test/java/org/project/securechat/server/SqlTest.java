@@ -1,7 +1,6 @@
 package org.project.securechat.server;
 import org.project.securechat.server.sql.*;
 
-import java.util.Arrays;
 
 import org.junit.jupiter.api.*;
 /**
@@ -15,7 +14,6 @@ public class SqlTest
   void serverOn(){
     //erver.main(null);
     SqlHandlerPasswords.createUsersTable();
-    // SqlHandlerConversations.createConversationsTable();
     SqlHandlerMessages.createMessagesTable();
     SqlHandlerConversations.createChatRelated();
   }

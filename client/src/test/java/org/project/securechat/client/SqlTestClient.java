@@ -13,9 +13,8 @@ public class SqlTestClient
   @Test
   void serverOn(){
     //erver.main(null);
-    SqlHandlerConversations.createConversationsTable();
     SqlHandlerConversations.createChatRelated();
-    SqlHandlerRsa.createRsaTable();
+    SqlHandlerFriends.createRsaTable();
     
   }
   @Test
