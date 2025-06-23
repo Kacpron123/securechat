@@ -150,7 +150,8 @@ public class ClientReceiver implements Runnable {
       String name=SqlHandlerConversations.getName(msg.getChatID());
       try {
         String decoded=EncryptionService.decryptWithAesKey(currentAesKey, msg.getData());
-        System.out.println(""+name+": "+decoded);
+        if(ClientListener.headerId==msg.getChatID())
+          System.out.println(""+name+": "+decoded);
         msg.setData(decoded);
         SqlHandlerMessages.insertMessage(msg);
       } catch (BadPaddingException e) {

@@ -149,7 +149,7 @@ public class ClientHandler implements Runnable{
           long senderId = msg.getSenderID();
           List<Long> usersInChat = SqlHandlerConversations.getUsersFromChat(chatId, senderId);
           for (Long userId : usersInChat) {
-              Message mess=new Message(userId,msg.getChatID(),DataType.TEXT,msg.getData());
+              Message mess=new Message(senderId,msg.getChatID(),DataType.TEXT,msg.getData());
               Server.sendMessage(userId, mess);
           }
       } catch (Exception e) {

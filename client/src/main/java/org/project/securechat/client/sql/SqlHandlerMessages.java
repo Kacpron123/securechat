@@ -2,9 +2,15 @@ package org.project.securechat.client.sql;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import org.project.securechat.client.Client;
 import org.project.securechat.sharedClass.Message;
 /**
  * Class used to handle SQL operations related to messages.
@@ -68,6 +74,64 @@ public class SqlHandlerMessages extends BaseSQL {
         pstmt.setString(4, mess.getTimestamp().toString());
 
         pstmt.executeUpdate();
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+  }
+
+  /**
+   * Retrieves a limited number of messages from a specific chat, and print it
+   * 
+   * @param chat_id The ID of the chat to retrieve messages from
+   * @param limit The maximum number of messages to retrieve
+   * 
+   */
+  public static void loadMessages(long chat_id, int limit) {
+    String sql = "SELECT sender_id, data " +
+                 "FROM messages "+
+                 "WHERE chat_id = ? "+
+                 "ORDER BY timestamp DESC "+
+                 "LIMIT ?";
+
+    System.out.println("Chat "+SqlHandlerConversations.getName(chat_id)+":");
+
+    // geting username of id
+    Map<Long, String> idToName = new HashMap<>();
+    {
+    try (Connection conn = connect();
+         Statement stmt = conn.createStatement();
+         ResultSet rs = stmt.executeQuery(
+           "SELECT f.user_id, f.login " +
+           "FROM friends f " +
+           "INNER JOIN chat_member cm ON f.user_id = cm.user_id " +
+           "WHERE cm.chat_id = " + chat_id)) {
+      while (rs.next()) {
+        long id = rs.getLong("user_id");
+        String name = rs.getString("login");
+        idToName.put(id, name);
+      }
+      idToName.put(Client.myID, "Ty");
+    } catch (SQLException e) {
+      LOGGER.error("Error while loading user names from the chat", e);
+      return;
+    }
+    }
+
+    try (Connection conn = connect();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        pstmt.setLong(1,chat_id);
+        pstmt.setInt(2, limit);
+        try (ResultSet rs = pstmt.executeQuery()) {
+            List<String> messagesToPrint = new ArrayList<>();
+            while (rs.next()) {
+                String data = rs.getString("data");
+                long senderId = rs.getLong("sender_id");
+                messagesToPrint.add(idToName.getOrDefault(senderId, "Unknown User (" + senderId + ")") + ": " + data);
+            }
+            for(String m:messagesToPrint)
+              System.out.println(m);
+        }
 
     } catch (SQLException e) {
         e.printStackTrace();

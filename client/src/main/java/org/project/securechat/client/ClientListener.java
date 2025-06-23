@@ -15,6 +15,7 @@ import org.project.securechat.sharedClass.Message;
 import org.project.securechat.sharedClass.Message.DataType;
 import org.project.securechat.client.sql.SqlHandlerConversations;
 import org.project.securechat.client.sql.SqlHandlerFriends;
+import org.project.securechat.client.sql.SqlHandlerMessages;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +37,7 @@ public class ClientListener implements Runnable {
     pubKey = EncryptionService.readPublicKeyFromFile();
   }
 
-  private long headerId = 0;
+  static public long headerId = 0;
 
   /**
    * Variable to store the current chat header id. Used to send the message to
@@ -69,6 +70,7 @@ public class ClientListener implements Runnable {
       if(check_chat_id>0){
         LOGGER.info("header set to: {}",check_chat_id);
         headerId=check_chat_id;
+        SqlHandlerMessages.loadMessages(headerId,8);
         currentAesKey = EncryptionService.getAesKeyFromString(SqlHandlerConversations.getaesKey(headerId));
         return;
       }

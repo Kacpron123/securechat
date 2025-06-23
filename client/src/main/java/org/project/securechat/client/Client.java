@@ -48,6 +48,7 @@ public class Client {
   private DataOutputStream out;
   private DataInputStream in;
   private BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in,StandardCharsets.UTF_8));
+  // TODO make as final login,myID
   static public String login;
   static public long myID;
   public Client(){
