@@ -137,7 +137,7 @@ public class Login implements Runnable {
       String registerResponse = in.readUTF();
       if (registerResponse.trim().equalsIgnoreCase("/register")) {
         if (handleRegistration(loginAttempt)) {
-          out.writeUTF("Registration successful. Please log in with your new credentials.");
+          out.writeUTF("Registration successful.");
            out.flush();
           // Po rejestracji, spróbujemy od razu zalogować nowym loginem
           return loginAttempt;

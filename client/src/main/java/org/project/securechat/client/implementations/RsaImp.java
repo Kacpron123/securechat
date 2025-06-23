@@ -120,7 +120,7 @@ public byte[] base64toBytes(String base64Encoded){
       KeyFactory keyFactory = KeyFactory.getInstance("RSA");
       return keyFactory.generatePublic(new X509EncodedKeySpec(keyBytes));
     } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-      LOGGER.error("readPubKey: Failed to load key", e);
+      LOGGER.error("readPubKey: Failed to load key");
     }
     return null;
   }
@@ -134,7 +134,7 @@ public byte[] base64toBytes(String base64Encoded){
       KeyFactory keyFactory = KeyFactory.getInstance("RSA");
       return keyFactory.generatePrivate(new PKCS8EncodedKeySpec(keyBytes));
     } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-      LOGGER.error("readPrivKey: Failed to load key", e);
+      LOGGER.error("readPrivKey: Failed to load key");
     }
     return null;
   }
