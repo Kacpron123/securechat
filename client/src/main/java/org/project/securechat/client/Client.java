@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Main class for the client.
@@ -42,7 +43,7 @@ public class Client {
   private final Map<DataType, Consumer<Message>> commandHandlers = new HashMap<>();
   private BlockingQueue<Message> serverInputQueue = new LinkedBlockingDeque<>(10);// takes server messages
   private BlockingQueue<String> clientOutputQueue = new LinkedBlockingDeque<>(10);// takes client messages
-  static BlockingQueue<String> status = new LinkedBlockingQueue<>();
+  static BlockingQueue<String> status = new LinkedBlockingQueue<>(1);
   private Socket socket;
   ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
   private DataOutputStream out;
@@ -91,11 +92,11 @@ public class Client {
           ClientListener cListener = new ClientListener(clientOutputQueue, executor, userInput);
           executor.submit(cListener);
 
-          // userInput.close();
+          // main loop
           Message mess;
           while (!executor.isTerminated()){
-            mess=serverInputQueue.take();
-            if(commandHandlers.containsKey(mess.getDataType()))
+            mess=serverInputQueue.poll(20,TimeUnit.MILLISECONDS);
+            if(mess!=null && commandHandlers.containsKey(mess.getDataType()))
               commandHandlers.get(mess.getDataType()).accept(mess);
           }
           break;
@@ -103,24 +104,38 @@ public class Client {
         }
       }
 
-      // LOGGER.info("logowanie nie udane");
-      try {
-        socket.close();
-        in.close();
-        out.close();
-      } catch (IOException d) {
-        LOGGER.error("CANNOT CLOSE STREAMS", d);
-      }
+    } catch (InterruptedException e) {
+      LOGGER.info("Client main thread interrupted during operation.", e);
+      Thread.currentThread().interrupt(); // Re-interrupt
+    } catch (IOException e) {
+        LOGGER.error("Client I/O error during startup or main loop: {}", e.getMessage(), e);
     } catch (Exception e) {
-      e.printStackTrace();
+      LOGGER.error("An unexpected error occurred in Client.start(): {}", e.getMessage(), e);
+      e.printStackTrace(); // For unexpected exceptions
+    }finally{
+      // Ensure all resources are closed, even if errors occur
+      LOGGER.info("Client shutting down...");
+      executor.shutdown(); // Initiate graceful shutdown
       try {
-        socket.close();
-        in.close();
-        out.close();
-      } catch (IOException g) {
-        e.printStackTrace();
+          // Give threads time to terminate
+          if (!executor.awaitTermination(3, TimeUnit.SECONDS)) {
+              LOGGER.warn("Executor did not terminate gracefully, forcing shutdown.");
+              executor.shutdownNow(); // Force shutdown if not graceful
+          }
+      } catch (InterruptedException e) {
+          LOGGER.error("Error awaiting executor termination: {}", e.getMessage(), e);
+          Thread.currentThread().interrupt();
       }
 
+      try {
+        if (socket != null && !socket.isClosed()) socket.close();
+        if (in != null) in.close();
+        if (out != null) out.close();
+        if (userInput != null) userInput.close(); // Close userInput at the end of client life
+      } catch (IOException d) {
+        LOGGER.error("Error closing client streams/socket: {}", d.getMessage(), d);
+      }
+      LOGGER.info("Client shutdown complete.");
     }
 
   }

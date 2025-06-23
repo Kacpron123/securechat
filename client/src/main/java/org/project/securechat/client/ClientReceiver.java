@@ -79,9 +79,14 @@ public class ClientReceiver implements Runnable {
           LOGGER.info("status OK");  
           
           break;
+        }else{
+          //TODO handle not login
+          //TODO handle offline app
         }
       }
+      
       LOGGER.info("WCHODZE DO DRUGIEJ PETLI");
+      // ------------------- phase 2 ----------------------
       while (!Thread.currentThread().isInterrupted()) {
         message = in.readUTF();
         LOGGER.trace("i get raw message: {}",message);
@@ -91,16 +96,22 @@ public class ClientReceiver implements Runnable {
         else
           serverInputQueue.put(mess);
       }
-    } catch (IOException | InterruptedException e) {
+    }catch(InterruptedException e){
+      LOGGER.info("ClientReceiver interrupted, shutting down.");
+      Thread.currentThread().interrupt();
+    }
+    catch (IOException e) {
       LOGGER.error("DRUGA PETLA {}",message, e);
       executor.shutdownNow();
-
+      Thread.currentThread().interrupt();
+    }finally{
       try {
+        if(in!=null)
         in.close();
       } catch (IOException d) {
         LOGGER.error("ERROR CLOSING STREAM", d);
       }
-      Thread.currentThread().interrupt();
+      LOGGER.info("ClientReceiver closed");
     }
   }
   /**
