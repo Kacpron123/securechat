@@ -6,22 +6,19 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
-public class SqlHandlerPasswords extends BaseSQL{
+public class SqlHandlerPasswords extends BaseSqlServer{
 
-  /**
-   * Creates the 'users' table to store user information, including RSA public keys.
-   * 
-   * <p>
-   * The 'users' table contains the following columns:
-   * <ul>
-   * <li>{@code user_id} (INTEGER PRIMARY KEY AUTOINCREMENT): A unique numerical identifier for the user.</li>
-   * <li>{@code username} (VARCHAR(50) UNIQUE NOT NULL): A unique login name for the user.</li>
-   * <li>{@code password} (VARCHAR(50) NOT NULL): The password associated with the user, used for authentication. Note that this should be hashed and salted in a real application.</li>
-   * <li>{@code rsa_public_key} (VARCHAR(2048) NOT NULL): The RSA public key associated with the user, used for secure communication.</li>
-   * <li>{@code last_login_time} (TEXT NOT NULL): The time when the user last logged in.</li>
-   * </ul>
-   * </p>
-   */
+/**
+ * Creates the 'users' table to store user information, including RSA public keys.
+ * * The 'users' table contains the following columns:
+ * <ul>
+ * <li>{@code user_id} (INTEGER PRIMARY KEY AUTOINCREMENT): A unique numerical identifier for the user.</li>
+ * <li>{@code username} (VARCHAR(50) UNIQUE NOT NULL): A unique login name for the user.</li>
+ * <li>{@code password} (VARCHAR(50) NOT NULL): The password associated with the user, used for authentication. Note that this should be hashed and salted in a real application.</li>
+ * <li>{@code rsa_public_key} (VARCHAR(2048) NOT NULL): The RSA public key associated with the user, used for secure communication.</li>
+ * <li>{@code last_login_time} (TEXT NOT NULL): The time when the user last logged in.</li>
+ * </ul>
+ */
   public static void createUsersTable() {
     String sql = "CREATE TABLE IF NOT EXISTS users (" +
         "user_id INTEGER PRIMARY KEY AUTOINCREMENT," +

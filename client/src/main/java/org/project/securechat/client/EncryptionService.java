@@ -99,7 +99,7 @@ public class EncryptionService {
     return aes.generateKey();
   }
   /**
-   * 
+   * gets aes key from string
    * @param aes64String string64 aes key
    * @return return aes key
    */
@@ -107,7 +107,7 @@ public class EncryptionService {
     return aes.getKeyFromBytes(aes.base64toBytes(aes64String));
   }
   /**
-   * 
+   * encrypt string
    * @param aesKey aes key
    * @param toEncrypt string too encrypt
    * @return return encrypted string 64
@@ -116,9 +116,10 @@ public class EncryptionService {
     return aes.byteTo64String(aes.encodeMessage(aesKey, toEncrypt.getBytes(Charset.defaultCharset())));
   }
   /**
-   * 
+   * decrypt string
    * @param aesKey aes key
    * @param toDecrypt string64 to decrypt
+   * @throws BadPaddingException
    * @return returns decrypted normal String
    */
   public static String decryptWithAesKey(SecretKey aesKey,String toDecrypt) throws BadPaddingException{

@@ -9,6 +9,9 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.util.Base64;
+/**
+ * Implementation of the Aes interface.
+ */
 public class AesImp implements Aes {
 
     private static final String AES_ALGORITHM = "AES";
@@ -19,9 +22,16 @@ public class AesImp implements Aes {
 
     private SecureRandom secureRandom;
 
-     public AesImp() {
+    /**
+     * Constructor for AesImp.
+     */
+    public AesImp() {
         this.secureRandom = new SecureRandom(); // Inicjalizacja
     }
+    /**
+     * Generates a new AES key.
+     * @return A new AES key.
+     */
     @Override
     public SecretKey generateKey() {
         try {
@@ -33,6 +43,12 @@ public class AesImp implements Aes {
             throw new RuntimeException("Nie można wygenerować klucza AES: " + e.getMessage(), e);
         }
     }
+    /**
+     * Converts a byte array into an AES key.
+     * 
+     * @param keyBytes The byte array to convert.
+     * @return The AES key.
+     */
     @Override
      public SecretKey getKeyFromBytes(byte[] keyBytes){
        if (keyBytes == null) {
@@ -49,14 +65,18 @@ public class AesImp implements Aes {
         return new SecretKeySpec(keyBytes, AES_ALGORITHM);
     }
 
-     
+    /**
+     * Generates a new initialization vector (IV) for AES encryption.
+     */
     @Override
     public GCMParameterSpec generateIV() {
         byte[] iv = new byte[GCM_IV_LENGTH_BYTES];
         secureRandom.nextBytes(iv);
         return new GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv);
     }
-
+    /**
+     * Encrypts a message using AES.
+     */
     @Override
     public byte[] encodeMessage(Key key, byte[] message) {
         if (!(key instanceof SecretKey)) {
@@ -82,7 +102,9 @@ public class AesImp implements Aes {
             throw new RuntimeException("Błąd podczas szyfrowania: " + e.getMessage(), e);
         }
     }
-
+    /**
+     * Decrypts a message using AES.
+     */
     @Override
     public byte[] decodeMessage(Key key, byte[] encryptedMessageWithIv) throws BadPaddingException {
         if (!(key instanceof SecretKey)) {
@@ -133,4 +155,5 @@ public class AesImp implements Aes {
 
    
 }
+
 

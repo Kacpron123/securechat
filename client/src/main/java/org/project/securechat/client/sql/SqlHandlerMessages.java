@@ -15,25 +15,23 @@ import org.project.securechat.sharedClass.Message;
 /**
  * Class used to handle SQL operations related to messages.
  */
-public class SqlHandlerMessages extends BaseSQL {
+public class SqlHandlerMessages extends BaseSqlClient {
 
   
-  /**
-   * Creates the 'messages' table, designed to store individual chat messages.
-   *
-   * <p>
-   * The 'messages' table contains the following columns:
-   * <ul>
-   * <li>{@code id} (INTEGER PRIMARY KEY AUTOINCREMENT): A unique identifier for each message. This is typically auto-generated.</li>
-   * <li>{@code sender_id} (INTEGER NOT NULL): An identifier for the user who sent the message, referencing the 'friends' (or 'users') table.</li>
-   * <li>{@code chat_id} (INTEGER NOT NULL): An identifier for the chat to which the message belongs, referencing the 'chats' table.</li>
-   * <li>{@code type} (VARCHAR(50) NOT NULL): The type of the message (e.g., "text", "image", "file"). This allows for future extensibility.</li>
-   * <li>{@code data} (TEXT NOT NULL): The actual content of the message. This can be large, so {@code TEXT} is often preferred over {@code VARCHAR} for message content.</li>
-   * <li>{@code timestamp} (DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP): The exact date and time when the message was sent or received. Automatically set to the current time if not provided.</li>
-   * </ul>
-   * </p>
-   *
-   */
+/**
+ * Creates the 'messages' table, designed to store individual chat messages.
+ *
+ * The 'messages' table contains the following columns:
+ * <ul>
+ * <li>{@code id} (INTEGER PRIMARY KEY AUTOINCREMENT): A unique identifier for each message. This is typically auto-generated.</li>
+ * <li>{@code sender_id} (INTEGER NOT NULL): An identifier for the user who sent the message, referencing the 'friends' (or 'users') table.</li>
+ * <li>{@code chat_id} (INTEGER NOT NULL): An identifier for the chat to which the message belongs, referencing the 'chats' table.</li>
+ * <li>{@code type} (VARCHAR(50) NOT NULL): The type of the message (e.g., "text", "image", "file"). This allows for future extensibility.</li>
+ * <li>{@code data} (TEXT NOT NULL): The actual content of the message. This can be large, so {@code TEXT} is often preferred over {@code VARCHAR} for message content.</li>
+ * <li>{@code timestamp} (DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP): The exact date and time when the message was sent or received. Automatically set to the current time if not provided.</li>
+ * </ul>
+ *
+ */
   public static void createMessagesTable() {
     String sql = "CREATE TABLE IF NOT EXISTS messages (" +
       "id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -91,7 +89,7 @@ public class SqlHandlerMessages extends BaseSQL {
     String sql = "SELECT sender_id, data " +
                  "FROM messages "+
                  "WHERE chat_id = ? "+
-                 "ORDER BY timestamp DESC "+
+                 "ORDER BY timestamp ASC "+
                  "LIMIT ?";
 
     System.out.println("Chat "+SqlHandlerConversations.getName(chat_id)+":");

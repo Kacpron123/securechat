@@ -20,7 +20,12 @@ public class JsonConverter {
   public static final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule())
       .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
   private static final Logger LOGGER = LogManager.getLogger();
-
+  /**
+   * Parse a given JSON string into a JsonNode object.
+   * @param stringToParse 
+   * @return JsonNode
+   * @throws IOException
+   */
   private static JsonNode parse(String stringToParse) throws IOException {
     try {
       return objectMapper.readTree(stringToParse);
@@ -35,6 +40,7 @@ public class JsonConverter {
   /**
    * Parse a given JSON string into a given target type.
    *
+   * @param <T> target type
    * @param jsonData JSON string to parse
    * @param targetType target type to parse to
    * @return parsed object
@@ -55,6 +61,7 @@ public class JsonConverter {
   /**
    * Parse a given object into a JSON string.
    *
+   * @param <T> target type
    * @param obj object to parse
    * @return JSON string
    * @throws IOException if there is a problem with the conversion

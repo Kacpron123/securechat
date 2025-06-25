@@ -39,7 +39,6 @@ public class Client {
   private static final String SERVER_HOST = "localhost";
   private static final int SERVER_PORT = 12345;
   private static final Logger LOGGER = LogManager.getLogger();
-
   private final Map<DataType, Consumer<Message>> commandHandlers = new HashMap<>();
   private BlockingQueue<Message> serverInputQueue = new LinkedBlockingDeque<>(10);// takes server messages
   private BlockingQueue<String> clientOutputQueue = new LinkedBlockingDeque<>(10);// takes client messages
@@ -49,7 +48,6 @@ public class Client {
   private DataOutputStream out;
   private DataInputStream in;
   private BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in,StandardCharsets.UTF_8));
-  // TODO make as final login,myID
   static public String login;
   static public long myID;
   public Client(){
@@ -59,7 +57,10 @@ public class Client {
     SqlHandlerMessages.createMessagesTable();
     initCommandHandlers();
   }
-  
+  /**
+   * Starts the client by connecting to the server, sending messages, receiving
+   * messages and handling user input.
+   */
   public void start() {
     try {
       socket = new Socket(SERVER_HOST, SERVER_PORT);
@@ -87,7 +88,7 @@ public class Client {
         String response = Client.status.poll();
         // TODO: checkinng error and aborting
         // correct logged
-        if (response != null && response.equals("OK")) {
+        if (response != null && response.equals("OK")){
           LOGGER.info("LOGOWANIE UDANE");
           ClientListener cListener = new ClientListener(clientOutputQueue, executor, userInput);
           executor.submit(cListener);
@@ -170,6 +171,7 @@ public class Client {
       try{
         PrivateKey privkey=EncryptionService.readPrivateKeyFromFile();
         String aes=EncryptionService.getString64FromBytes(EncryptionService.decodeWithRsa(privkey,msg.getData()));
+        System.out.println("chat created");
         LOGGER.info("creting chat: {} with aes: {}",chatid,aes);
         SqlHandlerConversations.Create_2_chat(chatid, Client.myID, senderId, aes);
       } catch (Exception e) {
@@ -179,6 +181,10 @@ public class Client {
     });
   
     }
+  /**
+   * Main method to start the client.
+   * @param args command line arguments
+   */
   public static void main(String[] args) {
     Client client = new Client();
     client.start();

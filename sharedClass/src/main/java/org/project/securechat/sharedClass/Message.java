@@ -5,14 +5,13 @@ import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
 
+
 public class Message {
-  public Message() {
-  }
-  
+  public Message(){}
   public Message(long senderID, long chatID, DataType dataType, String data) {
     this(senderID, chatID, dataType, data, Instant.now().toString());
   }
-    public Message(long senderID, long chatID, DataType dataType, String data,String timestamp) {
+  public Message(long senderID, long chatID, DataType dataType, String data,String timestamp) {
     this.senderID = senderID;
     this.chatID = chatID;
   
@@ -43,6 +42,9 @@ public class Message {
 
   // public byte[] message;
  
+  /**
+   * Enum for different types of messages
+   */
   public enum DataType {
     TEXT,
     FILE, //for now not used
@@ -54,11 +56,6 @@ public class Message {
     CREATE_G_CHAT, //create multiple person chat
     CLOSE_CONNECTION;
   }
-
-  public void write() {
-    System.out.println(data);
-  }
-
   public long getSenderID() {
     return senderID;
   }

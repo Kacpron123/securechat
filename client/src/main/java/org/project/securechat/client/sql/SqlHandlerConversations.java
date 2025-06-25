@@ -9,13 +9,12 @@ import java.sql.Statement;
  * Class used to handle SQL operations related to conversations.
  *
  */
-public class SqlHandlerConversations extends BaseSQL {
+public class SqlHandlerConversations extends BaseSqlClient {
 
 
-  /**
+/**
  * Creates the necessary database tables for managing conversations and their members.
  *
- * <p>
  * The 'chats' table stores information about individual chat conversations:
  * <ul>
  * <li>{@code chat_id} (INTEGER PRIMARY KEY): A unique identifier for the chat.</li>
@@ -23,16 +22,13 @@ public class SqlHandlerConversations extends BaseSQL {
  * <li>{@code is_group_chat} (BOOLEAN DEFAULT FALSE NOT NULL): A flag indicating if the chat is a group conversation.</li>
  * <li>{@code AES_KEY} (VARCHAR(250) NOT NULL): The AES key used for encrypting messages within the chat.</li>
  * </ul>
- * </p>
  *
- * <p>
  * The 'chat_member' table manages the many-to-many relationship between chats and users:
  * <ul>
  * <li>{@code chat_id} (INTEGER NOT NULL): An identifier for the chat, referencing the 'chats' table.</li>
  * <li>{@code user_id} (INTEGER NOT NULL): An identifier for the user, referencing the 'friends' (or 'users') table.</li>
  * </ul>
  * The primary key of the 'chat_member' table is a composite key of ({@code chat_id}, {@code user_id}).
- * </p>
  */
   public static void createChatRelated(){
     String sqlchat = "CREATE TABLE IF NOT EXISTS chats (" +
@@ -92,7 +88,6 @@ public class SqlHandlerConversations extends BaseSQL {
    * @param myId The ID of the current user.
    * @param userId The ID of the other user.
    * @param aes_key The AES key to use for encrypting messages in this chat.
-   * @throws SQLException If a database access error occurs.
    */
   static public void Create_2_chat(long chat_id,long myId,long userId,String aes_key){
     String sql = "INSERT INTO chats (chat_id, chat_name, AES_KEY) VALUES (?, ?, ?)";

@@ -9,20 +9,18 @@ import java.sql.Statement;
  * This class handles SQL operations related to RSA keys and user information.
  * It extends the BaseSQL class to utilize the database connection functionalities.
  */
-public class SqlHandlerFriends extends BaseSQL {
+public class SqlHandlerFriends extends BaseSqlClient {
 
-  /**
-   * Creates the 'friends' table to store user information, including RSA public keys.
-   *
-   * <p>
-   * The 'friends' table contains the following columns:
-   * <ul>
-   * <li>{@code user_id} (INTEGER PRIMARY KEY): A unique numerical identifier for the user.</li>
-   * <li>{@code login} (VARCHAR(50) NOT NULL UNIQUE): A unique login name for the user.</li>
-   * <li>{@code rsa_public_key} (VARCHAR(2048) NOT NULL): The RSA public key associated with the user, used for secure communication.</li>
-   * </ul>
-   * </p>
-   */
+/**
+ * Creates the 'friends' table to store user information, including RSA public keys.
+ *
+ * The 'friends' table contains the following columns:
+ * <ul>
+ * <li>{@code user_id} (INTEGER PRIMARY KEY): A unique numerical identifier for the user.</li>
+ * <li>{@code login} (VARCHAR(50) NOT NULL UNIQUE): A unique login name for the user.</li>
+ * <li>{@code rsa_public_key} (VARCHAR(2048) NOT NULL): The RSA public key associated with the user, used for secure communication.</li>
+ * </ul>
+ */
   public static void createRsaTable() {
     String sql = "CREATE TABLE IF NOT EXISTS friends (" +
       "user_id INTEGER PRIMARY KEY, "+
