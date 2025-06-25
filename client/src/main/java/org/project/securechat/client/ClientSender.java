@@ -11,6 +11,9 @@ import java.io.IOException;
 
 import java.util.concurrent.ExecutorService;
 
+/**
+ * Handles the sending of messages to the server.
+ */
 public class ClientSender implements Runnable {
   private DataOutputStream out;
   private BlockingQueue<String> clientOutputQueue;
@@ -22,7 +25,10 @@ public class ClientSender implements Runnable {
     this.clientOutputQueue = outputQueue;
     this.executor = executor;
   }
-  
+  /**
+   * Sends a message to the server
+   * @param message message
+   */
   public void send(String message) {
     try {
       clientOutputQueue.put(message);
@@ -31,7 +37,9 @@ public class ClientSender implements Runnable {
       executor.shutdownNow();
     }
   }
-  
+  /**
+   * The main loop of ClientSender. It waits for messages in the client output queue and sends them to the server.
+   */
   @Override
   public void run() {
     LOGGER.info("ClientSender working");

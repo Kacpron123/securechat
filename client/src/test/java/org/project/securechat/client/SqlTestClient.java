@@ -19,14 +19,14 @@ public class SqlTestClient
   }
   @Test
   void print_Tables(){
-   SQLiteTableViewer.main(null);
+   BaseSqlClient.main(null);
   }
   @Test
   void delete_database(){
-    //  SQLiteTableViewer.dropTable("conversations");
-    //  SQLiteTableViewer.dropTable("friends");
-    //  SQLiteTableViewer.dropTable("chats");
-    //  SQLiteTableViewer.dropTable("chat_member");
+    //  BaseSqlClient.dropTable("conversations");
+    //  BaseSqlClient.dropTable("friends");
+    //  BaseSqlClient.dropTable("chats");
+    //  BaseSqlClient.dropTable("chat_member");
   }
   @Test 
   void check_sorting(){

@@ -10,33 +10,28 @@ import java.util.List;
 /**
  * Class used to handle SQL operations related to conversations.
  */
-public class SqlHandlerConversations extends BaseSQL{
+public class SqlHandlerConversations extends BaseSqlServer{
 /**
-     * Creates the necessary database tables for managing conversations and their participants.
-     *
-     * <p>
-     * The 'chats' table stores general information about individual chat conversations:
-     * <ul>
-     * <li>{@code chat_id} (INTEGER PRIMARY KEY): A unique identifier for the chat.</li>
-     * <li>{@code chat_name} (VARCHAR(50) NOT NULL): The display name of the chat.</li>
-     * <li>{@code is_group_chat} (BOOLEAN DEFAULT FALSE NOT NULL): A flag indicating if the chat is a group conversation. Defaults to false (private chat).</li>
-     * </ul>
-     * </p>
-     *
-     * <p>
-     * The 'chat_participant' table manages the many-to-many relationship between chats and users,
-     * and stores the AES key encrypted specifically for each participant:
-     * <ul>
-     * <li>{@code chat_id} (INTEGER NOT NULL): The identifier of the chat, referencing the 'chats' table.</li>
-     * <li>{@code user_id} (INTEGER NOT NULL): The identifier of the user, referencing the 'friends' (or 'users') table.</li>
-     * <li>{@code encrypted_aes_key} (VARCHAR(512) NOT NULL): The symmetric AES key for the chat, encrypted using the participant's individual RSA public key.
-     * This key is specific to the {@code chat_id} and {@code user_id} pair.</li>
-     * </ul>
-     * The primary key of the 'chat_participant' table is a composite key of ({@code chat_id}, {@code user_id}),
-     * ensuring each user can only participate once in a given chat and stores one unique encrypted key.
-     * </p>
-     *
-     */
+ * Creates the necessary database tables for managing conversations and their participants.
+ *
+ * The 'chats' table stores general information about individual chat conversations:
+ * <ul>
+ * <li>{@code chat_id} (INTEGER PRIMARY KEY): A unique identifier for the chat.</li>
+ * <li>{@code chat_name} (VARCHAR(50) NOT NULL): The display name of the chat.</li>
+ * <li>{@code is_group_chat} (BOOLEAN DEFAULT FALSE NOT NULL): A flag indicating if the chat is a group conversation. Defaults to false (private chat).</li>
+ * </ul>
+ *
+ * The 'chat_participant' table manages the many-to-many relationship between chats and users,
+ * and stores the AES key encrypted specifically for each participant:
+ * <ul>
+ * <li>{@code chat_id} (INTEGER NOT NULL): The identifier of the chat, referencing the 'chats' table.</li>
+ * <li>{@code user_id} (INTEGER NOT NULL): The identifier of the user, referencing the 'friends' (or 'users') table.</li>
+ * <li>{@code encrypted_aes_key} (VARCHAR(512) NOT NULL): The symmetric AES key for the chat, encrypted using the participant's individual RSA public key.
+ * This key is specific to the {@code chat_id} and {@code user_id} pair.</li>
+ * </ul>
+ * The primary key of the 'chat_participant' table is a composite key of ({@code chat_id}, {@code user_id}),
+ * ensuring each user can only participate once in a given chat and stores one unique encrypted key.
+ */
   public static void createChatRelated() {
     String sqlchat = "CREATE TABLE IF NOT EXISTS chats (" +
         "chat_id INTEGER PRIMARY KEY AUTOINCREMENT," +

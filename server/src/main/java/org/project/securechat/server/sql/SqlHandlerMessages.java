@@ -9,29 +9,28 @@ import java.util.ArrayList;
 import java.util.List;
 import org.project.securechat.sharedClass.Message;
 import org.project.securechat.sharedClass.Message.DataType;
-public class SqlHandlerMessages extends BaseSQL{
-  /**
-   * This class provides utility methods for performing SQL operations related to the 'messages' table.
-   * It encapsulates the database interactions for storing, retrieving, and managing chat messages.
-   *
-   * <p>
-   * The 'messages' table is structured to store individual chat messages and contains the following columns:
-   * <ul>
-   * <li>{@code id} (INTEGER PRIMARY KEY AUTOINCREMENT): A unique, auto-generated identifier for each message.</li>
-   * <li>{@code sender_id} (INTEGER NOT NULL): The identifier of the user who sent the message. This column typically
-   * references the {@code user_id} in the 'friends' (or 'users') table, establishing a foreign key relationship.</li>
-   * <li>{@code chat_id} (INTEGER NOT NULL): The identifier of the chat conversation to which the message belongs. This column
-   * typically references the {@code chat_id} in the 'chats' table, establishing a foreign key relationship.</li>
-   * <li>{@code type} (VARCHAR(50) NOT NULL): Defines the nature or category of the message content (e.g., "TEXT", "IMAGE", "FILE").
-   * This type is typically mapped to an enumeration, such as {@link org.project.securechat.sharedClass.Message}.</li>
-   * <li>{@code data} (TEXT NOT NULL): The actual content of the message. For text messages, this would be the message string.
-   * For other types, it might store file paths, URLs, or serialized data.</li>
-   * <li>{@code timestamp} (DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP): The precise date and time when the message was sent or recorded.
-   * This column usually defaults to the current system timestamp upon insertion.</li>
-   * </ul>
-   * </p>
-   *
-   */
+/**
+ * This class provides utility methods for performing SQL operations related to the 'messages' table.
+ * It encapsulates the database interactions for storing, retrieving, and managing chat messages.
+ *
+ */
+public class SqlHandlerMessages extends BaseSqlServer{
+ /** The 'messages' table is structured to store individual chat messages and contains the following columns:
+ * <ul>
+ * <li>{@code id} (INTEGER PRIMARY KEY AUTOINCREMENT): A unique, auto-generated identifier for each message.</li>
+ * <li>{@code sender_id} (INTEGER NOT NULL): The identifier of the user who sent the message. This column typically
+ * references the {@code user_id} in the 'friends' (or 'users') table, establishing a foreign key relationship.</li>
+ * <li>{@code chat_id} (INTEGER NOT NULL): The identifier of the chat conversation to which the message belongs. This column
+ * typically references the {@code chat_id} in the 'chats' table, establishing a foreign key relationship.</li>
+ * <li>{@code type} (VARCHAR(50) NOT NULL): Defines the nature or category of the message content (e.g., "TEXT", "IMAGE", "FILE").
+ * This type is typically mapped to an enumeration, such as {@link org.project.securechat.sharedClass.Message}.</li>
+ * <li>{@code data} (TEXT NOT NULL): The actual content of the message. For text messages, this would be the message string.
+ * For other types, it might store file paths, URLs, or serialized data.</li>
+ * <li>{@code timestamp} (DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP): The precise date and time when the message was sent or recorded.
+ * This column usually defaults to the current system timestamp upon insertion.</li>
+ * </ul>
+ *
+ */
   public static void createMessagesTable() {
    String sql = "CREATE TABLE IF NOT EXISTS messages (" +
     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -84,8 +83,7 @@ public static void insertMessage(Message mess) {
  * Retrieves list of messages sent to user after specified login date.
  * 
  * @param id The unique identifier of the user
- * @param loginDate Login date of the user
- * @return List of messages sent to user after loginDate
+ * @return List of messages sent to user after last login
  */
 public static List<Message> getOlderMessages(Long id){
   //chincking server he is in:

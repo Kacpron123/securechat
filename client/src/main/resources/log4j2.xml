@@ -13,8 +13,8 @@
 
   <Loggers>
  
-    <Logger name="com.mycompany" level="TRACE"/>
-    <Root level="TRACE">
+    <Logger name="com.mycompany" level="FATAL"/>
+    <Root level="FATAL">
       <AppenderRef ref="CONSOLE"/>
     </Root>
      <Logger name="org.project.end2.implementations.RsaImp" level="INFO" additivity="false">

@@ -27,14 +27,13 @@ import org.project.securechat.sharedClass.*;
  * message.
  */
 public class ClientHandler implements Runnable{
-    private static final Logger LOGGER = LogManager.getLogger(); 
+    private static final Logger LOGGER = LogManager.getLogger();
     public Socket socket;
     private ExecutorService executor ;
     DataOutputStream out;
     public long userID;
     private final Map<Message.DataType,Function<Message,Message>> commandHandler= new HashMap<>();
     BlockingQueue<String> clientInputQueue;
-
     public ClientHandler(Socket socket,Long userID, BlockingQueue<String> preClientInputQueue, DataOutputStream out,ExecutorService executor){
         this.socket = socket;
         this.clientInputQueue=preClientInputQueue;

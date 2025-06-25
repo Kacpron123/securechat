@@ -68,7 +68,7 @@ public class ClientListener implements Runnable {
       String username = msg.split(" ")[1];
       Long check_chat_id=SqlHandlerConversations.chat_2_Exist(username);
       if(check_chat_id>0){
-        LOGGER.info("header set to: {}",check_chat_id);
+        System.out.println("header set to: "+username);
         headerId=check_chat_id;
         SqlHandlerMessages.loadMessages(headerId,8);
         currentAesKey = EncryptionService.getAesKeyFromString(SqlHandlerConversations.getaesKey(headerId));
@@ -78,7 +78,7 @@ public class ClientListener implements Runnable {
       Long userId=SqlHandlerFriends.getUserId(username);
       if(userId==-1){
         LOGGER.debug("Don't have user in SQL\nasking Server");
-        tosend=new Message(userId,0,DataType.RSA_KEY,"USERNAME:"+username);
+        tosend=new Message(Client.myID,0,DataType.RSA_KEY,"USERNAME:"+username);
         try{
           clientOutputQueue.put(JsonConverter.parseObjectToJson(tosend));
           Thread.sleep(200);
@@ -87,6 +87,7 @@ public class ClientListener implements Runnable {
         }
         userId=SqlHandlerFriends.getUserId(username);
         if(userId==-2){
+          System.out.println("user not exist");
           LOGGER.error("User: {} not exist",username);
           return;
         }
@@ -117,7 +118,7 @@ public class ClientListener implements Runnable {
       }
       headerId=check_chat_id;
       currentAesKey = EncryptionService.getAesKeyFromString(SqlHandlerConversations.getaesKey(headerId));
-      LOGGER.info("header set to: {}",headerId);
+      System.out.println("header set to: "+username);
     });
 
     /**
@@ -126,13 +127,12 @@ public class ClientListener implements Runnable {
     commandHandlers.put("/quit", msg -> {
       headerId = 0;
       currentAesKey = null;
-      LOGGER.info("HEADER cleared KEY CLEANER");
+      System.out.println("header cleared");
     });
     /**
      * Question of the list of commands that the client recognizes
      */
     commandHandlers.put("/help", msg -> {
-      //TODO using /help in chat
       System.out.println("/exit\texit an app");
       System.out.println("/quit\texit from current chat");
       System.out.println("/chat [name]\t open chat [name]");
@@ -162,7 +162,7 @@ public class ClientListener implements Runnable {
     }
     else{
       if(headerId == 0){
-        LOGGER.info("HEADER N/A");
+        System.out.println("You are not in any chat, use [/help] for help");
         return;
       }
       mess= new Message(Client.myID, headerId, DataType.TEXT, EncryptionService.encryptWithAesKey(currentAesKey,message));

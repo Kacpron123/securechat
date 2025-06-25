@@ -1,6 +1,4 @@
-client/target
-server/target
-sharedClass/target
+target
 key.pub
 key.priv
 *.db

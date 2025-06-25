@@ -19,7 +19,7 @@ public class SqlTest
   }
   @Test
   void print_Tables(){
-    SQLiteTableViewer.main(null);
+    BaseSqlServer.main(null);
   }
   @Test
   void delete_database(){
@@ -28,16 +28,16 @@ public class SqlTest
     // SqlHandlerPasswords.dropTable("messages");
     // SqlHandlerPasswords.dropTable("chats");
     // SqlHandlerPasswords.dropTable("chat_participant");
-    // SQLiteTableViewer.main(null);
+    // BaseSqlServer.main(null);
   }
   @Test
   void check_database(){
-   // SQLiteTableViewer.main(null);
-   SQLiteTableViewer.main(null);
+   // BaseSqlServer.main(null);
+   BaseSqlServer.main(null);
     //SqlHandlerPasswords.dropTable("conversations");
    // SqlHandlerMessages.createMessagesTable();
-  //  SQLiteTableViewer.dropTable("conversations");
-  // SQLiteTableViewer.dropTable("users");
+  //  BaseSqlServer.dropTable("conversations");
+  // BaseSqlServer.dropTable("users");
   }
   // @Test 
   // void check_sorting(){
